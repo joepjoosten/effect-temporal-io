@@ -35,6 +35,11 @@
     "module": "NodeNext",
     "incremental": true,
     "removeComments": false,
-    "plugins": [{ "name": "@effect/language-service" }]
+    "plugins": [{ "name": "@effect/language-service" }],
+    "paths": {
+      "@effect-temporal/workflow": ["./packages/temporal/src/index.js"],
+      "@effect-temporal/workflow/*": ["./packages/temporal/src/*.js"],
+      "@effect-temporal/workflow/test/*": ["./packages/temporal/test/*.js"]
+    }
   }
 }

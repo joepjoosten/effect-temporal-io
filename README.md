@@ -1,6 +1,6 @@
-# Effect Package Template
+# Effect Monorepo Template
 
-This template provides a solid foundation for building scalable and maintainable TypeScript package with Effect. 
+This template provides a solid foundation for building scalable and maintainable TypeScript applications with Effect. 
 
 ## Running Code
 
@@ -16,7 +16,7 @@ pnpm tsx ./path/to/the/file.ts
 
 **Building**
 
-To build the package:
+To build all packages in the monorepo:
 
 ```sh
 pnpm build
@@ -24,8 +24,9 @@ pnpm build
 
 **Testing**
 
-To test the package:
+To test all packages in the monorepo:
 
 ```sh
 pnpm test
 ```
+
