@@ -1,20 +1,19 @@
 {
-  "name": "@template/cli",
+  "name": "@effect-temporal/workflow",
   "version": "0.0.0",
   "type": "module",
   "license": "MIT",
-  "description": "The CLI template",
+  "description": "Temporal-backed workflow integration for effect-smol workflows",
   "repository": {
     "type": "git",
     "url": "<PLACEHOLDER>",
-    "directory": "packages/cli"
+    "directory": "packages/temporal"
   },
   "publishConfig": {
     "access": "public",
     "directory": "dist"
   },
   "scripts": {
-    "dev": "tsx --watch src/server.ts",
     "codegen": "build-utils prepare-v2",
     "build": "pnpm build-esm && pnpm build-annotate && pnpm build-cjs && build-utils pack-v2",
     "build-esm": "tsc -b tsconfig.build.json",
@@ -25,18 +24,8 @@
     "coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@effect/cli": "latest",
-    "@effect/platform": "latest",
-    "@effect/platform-node": "latest",
-    "@template/domain": "workspace:^",
-    "effect": "latest"
-  },
-  "devDependencies": {
-    "@effect/cli": "latest",
-    "@effect/platform": "latest",
-    "@effect/platform-node": "latest",
-    "@template/domain": "workspace:^",
-    "effect": "latest"
+    "@temporalio/client": "^1.15.0",
+    "effect": "4.0.0-beta.43"
   },
   "effect": {
     "generateExports": {
