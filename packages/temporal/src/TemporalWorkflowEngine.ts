@@ -2,6 +2,7 @@
  * @since 1.0.0
  */
 import { type WorkflowFailedError, WorkflowExecutionAlreadyStartedError } from "@temporalio/client"
+import * as Duration from "effect/Duration"
 import * as Effect from "effect/Effect"
 import * as Exit from "effect/Exit"
 import * as Layer from "effect/Layer"
@@ -14,6 +15,16 @@ import * as Workflow from "effect/unstable/workflow/Workflow"
 import * as WorkflowEngine from "effect/unstable/workflow/WorkflowEngine"
 import * as TemporalClient from "./TemporalClient.js"
 import { TemporalRequestError, TemporalWorkflowEngineError } from "./TemporalError.js"
+import type { CompleteDeferredSignal, ScheduleClockSignal, TemporalDeferredResult, TemporalWorkflowState } from "./TemporalWorkflowProtocol.js"
+import {
+  completeDeferredSignalName,
+  deferredResultQueryName,
+  interruptSignalName,
+  resumeSignalName,
+  scheduleClockSignalName,
+  workflowIdFor,
+  workflowStateQueryName
+} from "./TemporalWorkflowProtocol.js"
 
 /**
  * @since 1.0.0
@@ -77,7 +88,7 @@ export const make = (
         Ref.update(registry, (current) => new Map(current).set(workflow.name, workflow)),
       execute: (workflow: Workflow.Any, options: any) =>
         Effect.gen(function*() {
-          const workflowId = `${config.workflowIdPrefix ?? workflow.name}/${options.executionId}`
+          const workflowId = workflowIdFor(workflow.name, options.executionId, config.workflowIdPrefix)
           try {
             const handle = yield* client.start(workflow.name, {
               workflowId,
@@ -109,7 +120,7 @@ export const make = (
         }) as any,
       poll: (workflow: Workflow.Any, executionId: string) =>
         Effect.gen(function*() {
-          const workflowId = `${config.workflowIdPrefix ?? workflow.name}/${executionId}`
+          const workflowId = workflowIdFor(workflow.name, executionId, config.workflowIdPrefix)
           const description = yield* client.describe({ workflowId }).pipe(
             Effect.catchTag("TemporalRequestError", () => Effect.succeed(null))
           )
@@ -117,6 +128,15 @@ export const make = (
             return Option.none()
           }
           if (description.status.name === "RUNNING") {
+            const state = yield* client.query<TemporalWorkflowState>(
+              { workflowId },
+              workflowStateQueryName
+            ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.succeed<TemporalWorkflowState | null>(null)))
+            if (state?.status === "suspended") {
+              return Option.some(new Workflow.Suspended({
+                cause: undefined
+              }))
+            }
             return Option.none()
           }
           try {
@@ -127,18 +147,57 @@ export const make = (
           }
         }) as any,
       interrupt: (workflow: Workflow.Any, executionId: string) =>
-        client.cancel({
-          workflowId: `${config.workflowIdPrefix ?? workflow.name}/${executionId}`
-        }).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
-      resume: () => Effect.void,
+        client.signal(
+          {
+            workflowId: workflowIdFor(workflow.name, executionId, config.workflowIdPrefix)
+          },
+          interruptSignalName
+        ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
+      resume: (workflow: Workflow.Any, executionId: string) =>
+        client.signal(
+          {
+            workflowId: workflowIdFor(workflow.name, executionId, config.workflowIdPrefix)
+          },
+          resumeSignalName
+        ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
       activityExecute: () =>
         unsupported("Temporal activity execution bridge is not implemented yet"),
-      deferredResult: (_deferred: DurableDeferred.Any) =>
-        unsupported("Temporal durable deferred state is not implemented yet"),
-      deferredDone: () =>
-        unsupported("Temporal durable deferred completion is not implemented yet"),
-      scheduleClock: (_workflow: Workflow.Any, _options: { readonly executionId: string; readonly clock: DurableClock }) =>
-        unsupported("Temporal durable clock scheduling is not implemented yet")
+      deferredResult: (deferred: DurableDeferred.Any) =>
+        Effect.gen(function*() {
+          const instance = yield* WorkflowEngine.WorkflowInstance
+          return yield* client.query<TemporalDeferredResult>(
+            {
+              workflowId: workflowIdFor(instance.workflow.name, instance.executionId, config.workflowIdPrefix)
+            },
+            deferredResultQueryName,
+            deferred.name
+          ).pipe(
+            Effect.map((result) => result.found ? Option.some(result.exit as Exit.Exit<unknown, unknown>) : Option.none()),
+            Effect.catchTag("TemporalRequestError", () => Effect.succeed(Option.none()))
+          )
+        }),
+      deferredDone: (_deferred: DurableDeferred.Any, options: any) =>
+        client.signal(
+          {
+            workflowId: workflowIdFor(options.workflowName, options.executionId, config.workflowIdPrefix)
+          },
+          completeDeferredSignalName,
+          {
+            name: options.deferredName,
+            exit: options.exit
+          } satisfies CompleteDeferredSignal
+        ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
+      scheduleClock: (workflow: Workflow.Any, options: { readonly executionId: string; readonly clock: DurableClock }) =>
+        client.signal(
+          {
+            workflowId: workflowIdFor(workflow.name, options.executionId, config.workflowIdPrefix)
+          },
+          scheduleClockSignalName,
+          {
+            name: options.clock.name,
+            durationMs: Duration.toMillis(options.clock.duration)
+          } satisfies ScheduleClockSignal
+        ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void))
     } as any) as WorkflowEngine.WorkflowEngine["Service"]
 
     return engine
