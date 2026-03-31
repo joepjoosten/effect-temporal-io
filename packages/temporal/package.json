@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@temporalio/client": "^1.15.0",
+    "@temporalio/worker": "^1.15.0",
+    "@temporalio/workflow": "^1.15.0",
     "effect": "4.0.0-beta.43"
   },
   "effect": {

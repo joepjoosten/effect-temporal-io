@@ -52,6 +52,16 @@ export interface TemporalWorkflowClient {
   readonly cancel: (
     execution: WorkflowExecution
   ) => Effect.Effect<void, TemporalRequestError>
+  readonly query: <A = unknown>(
+    execution: WorkflowExecution,
+    query: string,
+    ...args: ReadonlyArray<any>
+  ) => Effect.Effect<A, TemporalRequestError>
+  readonly signal: (
+    execution: WorkflowExecution,
+    signal: string,
+    ...args: ReadonlyArray<any>
+  ) => Effect.Effect<void, TemporalRequestError>
 }
 
 /**
@@ -111,6 +121,12 @@ export const make = (
       cancel: ({ workflowId, runId }) =>
         wrap("Failed to cancel workflow", async () => {
           await client.getHandle(workflowId, runId).cancel()
+        }),
+      query: ({ workflowId, runId }, query, ...args) =>
+        wrap("Failed to query workflow", () => client.getHandle(workflowId, runId).query(query, ...args)),
+      signal: ({ workflowId, runId }, signal, ...args) =>
+        wrap("Failed to signal workflow", async () => {
+          await client.getHandle(workflowId, runId).signal(signal, ...args)
         })
     })
   })

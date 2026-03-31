@@ -40,3 +40,16 @@ export class TemporalWorkflowEngineError extends Data.TaggedError("TemporalWorkf
     super(props)
   }
 }
+
+/**
+ * @since 1.0.0
+ * @category Errors
+ */
+export class TemporalWorkerError extends Data.TaggedError("TemporalWorkerError")<{
+  readonly message: string
+  readonly cause: unknown
+}> {
+  constructor(props: { readonly message: string; readonly cause: unknown }) {
+    super(props)
+  }
+}
