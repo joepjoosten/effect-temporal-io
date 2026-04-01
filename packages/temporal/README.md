@@ -22,3 +22,31 @@ This package is the first implementation slice:
 ## Status
 
 The package now has client, worker, and protocol scaffolding. Full `Activity` / `DurableDeferred` / `DurableClock` parity still requires the Temporal workflow runtime implementation.
+
+## Example: Full Effect Workflow Surface
+
+The maintained, type-checked example lives in
+[`sample/effect-workflow-example.ts`](./sample/effect-workflow-example.ts).
+
+It demonstrates these `effect/workflow` constructs together:
+
+- `Workflow.make`
+- workflow annotations (`Workflow.SuspendOnFailure`, `Workflow.CaptureDefects`)
+- `workflow.withCompensation(...)`
+- `Workflow.addFinalizer(...)`
+- `Workflow.provideScope(...)`
+- `Activity.make`, `Activity.retry`, `Activity.raceAll`, `Activity.idempotencyKey`
+- `DurableDeferred.make`, `DurableDeferred.await`, `DurableDeferred.into`, `DurableDeferred.raceAll`
+- `DurableDeferred.token`, `DurableDeferred.tokenFromPayload`, `DurableDeferred.succeed`, `DurableDeferred.fail`, `DurableDeferred.done`
+- `DurableClock.sleep`
+- workflow lifecycle methods: `execute`, `executionId`, `poll`, `interrupt`, `resume`, `toLayer`
+
+### Temporal status for this repository
+
+This example is the full upstream `effect/workflow` surface, but this package does not implement all of it yet.
+
+- `Workflow` metadata and engine operations (`execute`, `poll`, `interrupt`, `resume`) are present.
+- Temporal-side protocol primitives for deferreds and clocks are present.
+- Full workflow-runtime execution, `Activity` bridging, and end-to-end `DurableDeferred` / `DurableClock` behavior are still in progress in this repository.
+
+So treat the example as the target usage shape for `effect/workflow`, not as a claim that every line is already executable through `@effect-temporal/workflow` today.
