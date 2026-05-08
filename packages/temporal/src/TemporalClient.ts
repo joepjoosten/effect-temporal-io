@@ -14,7 +14,7 @@ import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 import * as Option from "effect/Option"
 import * as Schema from "effect/Schema"
-import * as ServiceMap from "effect/ServiceMap"
+import * as Context from "effect/Context"
 import type * as Scope from "effect/Scope"
 import * as TemporalConnection from "./TemporalConnection.js"
 import { TemporalRequestError } from "./TemporalError.js"
@@ -68,7 +68,7 @@ export interface TemporalWorkflowClient {
  * @since 1.0.0
  * @category Tags
  */
-export const TemporalWorkflowClient = ServiceMap.Service<TemporalWorkflowClient>(
+export const TemporalWorkflowClient = Context.Service<TemporalWorkflowClient>(
   "@effect-temporal/workflow/TemporalWorkflowClient"
 )
 

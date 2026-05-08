@@ -7,7 +7,7 @@ import {
 } from "@temporalio/client"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
-import * as ServiceMap from "effect/ServiceMap"
+import * as Context from "effect/Context"
 import type * as Scope from "effect/Scope"
 import { TemporalConnectionError } from "./TemporalError.js"
 
@@ -21,7 +21,7 @@ export interface TemporalConnection extends Connection {}
  * @since 1.0.0
  * @category Tags
  */
-export const TemporalConnection = ServiceMap.Service<TemporalConnection>(
+export const TemporalConnection = Context.Service<TemporalConnection>(
   "@effect-temporal/workflow/TemporalConnection"
 )
 

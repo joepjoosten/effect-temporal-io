@@ -8,7 +8,7 @@ import * as Exit from "effect/Exit"
 import * as Layer from "effect/Layer"
 import * as Option from "effect/Option"
 import * as Ref from "effect/Ref"
-import * as ServiceMap from "effect/ServiceMap"
+import * as Context from "effect/Context"
 import { type DurableClock } from "effect/unstable/workflow/DurableClock"
 import type * as DurableDeferred from "effect/unstable/workflow/DurableDeferred"
 import * as Workflow from "effect/unstable/workflow/Workflow"
@@ -40,7 +40,7 @@ export interface TemporalWorkflowEngineConfig {
  * @since 1.0.0
  * @category Tags
  */
-export const TemporalWorkflowRegistry = ServiceMap.Service<
+export const TemporalWorkflowRegistry = Context.Service<
   TemporalWorkflowRegistry,
   Map<string, Workflow.Any>
 >("@effect-temporal/workflow/TemporalWorkflowRegistry")
