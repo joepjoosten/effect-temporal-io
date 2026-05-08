@@ -14,14 +14,13 @@ This package is the first implementation slice:
 
 ## Planned Next Steps
 
-1. Execute registered Effect workflows inside Temporal workers using the shared protocol surface.
-2. Complete `Activity` bridging so workflow-side `Activity.make(...)` semantics match `effect-smol`.
-3. Replace the provisional query / signal payloads with deterministic typed codecs across client and worker boundaries.
-4. Add end-to-end tests against Temporal test infrastructure.
+1. Replace the provisional query / signal payloads with deterministic typed codecs across client and worker boundaries.
+2. Add end-to-end tests against Temporal test infrastructure.
+3. Extend the Temporal workflow runtime with nested workflow support.
 
 ## Status
 
-The package now has client, worker, and protocol scaffolding. Full `Activity` / `DurableDeferred` / `DurableClock` parity still requires the Temporal workflow runtime implementation.
+The package now has client, worker, protocol, workflow-runtime, and activity-bridge support for the Effect workflow surface used by the sample.
 
 ## Example: Full Effect Workflow Surface
 
@@ -47,6 +46,7 @@ This example is the full upstream `effect/workflow` surface, but this package do
 
 - `Workflow` metadata and engine operations (`execute`, `poll`, `interrupt`, `resume`) are present.
 - Temporal-side protocol primitives for deferreds and clocks are present.
-- Full workflow-runtime execution, `Activity` bridging, and end-to-end `DurableDeferred` / `DurableClock` behavior are still in progress in this repository.
+- Full workflow-runtime execution plus `Activity` / `DurableDeferred` / `DurableClock` behavior are now available through `TemporalWorkflowRuntime.makeWorkflow(...)` and `TemporalWorkflowRuntime.makeActivities(...)`.
+- Nested workflow execution inside the Temporal runtime is still not implemented.
 
-So treat the example as the target usage shape for `effect/workflow`, not as a claim that every line is already executable through `@effect-temporal/workflow` today.
+So the example now reflects the supported usage shape for the implemented runtime path, with nested workflows still remaining as the main gap.
