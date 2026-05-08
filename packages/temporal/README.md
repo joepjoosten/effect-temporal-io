@@ -19,15 +19,15 @@ This package currently provides:
 ## Planned Next Steps
 
 1. Replace the provisional query / signal payloads with deterministic typed codecs across client and worker boundaries.
-2. Add end-to-end tests against Temporal test infrastructure.
+2. Expand end-to-end tests against Temporal test infrastructure beyond the initial worker/client path.
 3. Expand lifecycle parity coverage for interruption, failure suspension, compensation, child workflows, and live worker behavior.
-4. Document a full worker setup example once the Temporal e2e harness is in place.
+4. Document package-local worker setup and runtime examples as the Temporal e2e harness grows.
 
 ## Status
 
 The package now has client, worker, protocol, workflow-runtime, activity-bridge, durable deferred / clock, and child workflow support for the Effect workflow surface used by the sample.
 
-The remaining gap is validation breadth: the current repository does not yet include Temporal test-server end-to-end coverage, so the runtime bridge is type-checked and unit-test compatible but still needs live Temporal e2e verification.
+The remaining gap is validation breadth: the current repository includes initial Temporal test-server end-to-end coverage for the worker/client path, but the full runtime bridge still needs broader live Temporal e2e verification across activities, deferreds, durable clocks, lifecycle signals, and child workflows.
 
 ## Runtime Adapter
 
@@ -69,4 +69,4 @@ This example is the target full upstream `effect/workflow` surface for this pack
 - Full workflow-runtime execution plus `Activity` / `DurableDeferred` / `DurableClock` behavior are available through `TemporalWorkflowRuntime.makeWorkflow(...)` and `TemporalWorkflowRuntime.makeActivities(...)`.
 - Nested workflow execution inside the Temporal runtime is available through Temporal child workflows.
 
-Until the e2e harness lands, treat the example as the intended usage shape and use it together with live Temporal validation in downstream applications.
+Until the e2e harness covers the full runtime surface, treat the example as the intended usage shape and use it together with live Temporal validation in downstream applications.
