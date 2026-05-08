@@ -6,19 +6,20 @@ import {
   defineQuery,
   defineSignal,
   executeChild,
-  scheduleActivity,
+  proxyActivities,
+  proxyLocalActivities,
   setHandler,
   sleep,
-  startChild
+  startChild,
+  workflowInfo
 } from "@temporalio/workflow"
-import * as Activity from "effect/unstable/workflow/Activity"
+import * as Cause from "effect/Cause"
 import * as Duration from "effect/Duration"
-import type { DurableClock } from "effect/unstable/workflow/DurableClock"
-import type * as DurableDeferred from "effect/unstable/workflow/DurableDeferred"
 import * as Effect from "effect/Effect"
 import * as Exit from "effect/Exit"
 import * as Option from "effect/Option"
 import * as Schema from "effect/Schema"
+import * as Activity from "effect/unstable/workflow/Activity"
 import * as Workflow from "effect/unstable/workflow/Workflow"
 import * as WorkflowEngine from "effect/unstable/workflow/WorkflowEngine"
 import type {
@@ -35,24 +36,6 @@ import {
   scheduleClockSignalName,
   workflowStateQueryName
 } from "./TemporalWorkflowProtocol.js"
-
-/**
- * @since 1.0.0
- * @category Models
- */
-export interface TemporalWorkflowRuntimeOptions {
-  readonly activityOptions?: Parameters<typeof scheduleActivity>[2] | undefined
-}
-
-/**
- * @since 1.0.0
- * @category Models
- */
-export interface TemporalActivityExecutionContext {
-  readonly workflowName: string
-  readonly executionId: string
-  readonly attempt: number
-}
 
 /**
  * @since 1.0.0
@@ -103,7 +86,6 @@ export interface TemporalWorkflowRuntimeState {
   suspendedCause: TemporalWorkflowState["suspendedCause"]
   readonly deferreds: Map<string, Exit.Exit<unknown, unknown>>
   readonly clocks: Map<string, ScheduleClockSignal>
-  readonly clockDeferreds: Map<string, string>
 }
 
 /**
@@ -120,8 +102,7 @@ export const makeRuntimeState = (
   result: undefined,
   suspendedCause: undefined,
   deferreds: new Map(),
-  clocks: new Map(),
-  clockDeferreds: new Map()
+  clocks: new Map()
 })
 
 /**
@@ -145,239 +126,24 @@ export const installBaseHandlers = (
   })
   setHandler(interruptSignal, () => {
     state.interrupted = true
+    state.resumed = false
     state.status = "suspended"
   })
   setHandler(resumeSignal, () => {
+    state.interrupted = false
     state.resumed = true
     state.status = "running"
   })
   setHandler(completeDeferredSignal, ({ name, exit }) => {
     state.deferreds.set(name, exit)
-    state.resumed = true
+    if (!state.interrupted) {
+      state.resumed = true
+      state.status = "running"
+    }
   })
   setHandler(scheduleClockSignal, (clock) => {
     state.clocks.set(clock.name, clock)
   })
-}
-
-const defaultActivityOptions: Parameters<typeof scheduleActivity>[2] = {
-  startToCloseTimeout: "1 minute"
-}
-
-const runEffect = <A, E>(
-  effect: Effect.Effect<A, E, never>
-): Promise<A> => Effect.runPromise(effect)
-
-const provideWorkflowServices = <A, E, R>(
-  effect: Effect.Effect<A, E, R>,
-  engine: WorkflowEngine.WorkflowEngine["Service"],
-  instance: WorkflowEngine.WorkflowInstance["Service"]
-): Effect.Effect<A, E, Exclude<R, WorkflowEngine.WorkflowEngine | WorkflowEngine.WorkflowInstance>> =>
-  effect.pipe(
-    Effect.provideService(WorkflowEngine.WorkflowEngine, engine),
-    Effect.provideService(WorkflowEngine.WorkflowInstance, instance)
-  ) as any
-
-const completeClock = (
-  state: TemporalWorkflowRuntimeState,
-  clockName: string,
-  deferredName: string,
-  durationMs: number
-): void => {
-  if (state.clockDeferreds.has(clockName)) {
-    return
-  }
-  state.clockDeferreds.set(clockName, deferredName)
-  void sleep(durationMs).then(() => {
-    state.deferreds.set(deferredName, Exit.void)
-    state.resumed = true
-  })
-}
-
-/**
- * Creates the Effect workflow engine that runs inside Temporal's workflow
- * isolate. It bridges Effect activities to Temporal activities and stores
- * DurableDeferred / DurableClock state in workflow history through signals and
- * timers.
- *
- * @since 1.0.0
- * @category Constructors
- */
-export const makeWorkflowEngine = (
-  state: TemporalWorkflowRuntimeState,
-  options: TemporalWorkflowRuntimeOptions = {}
-): WorkflowEngine.WorkflowEngine["Service"] => {
-  const activityOptions = options.activityOptions ?? defaultActivityOptions
-
-  return WorkflowEngine.makeUnsafe({
-    register: () => Effect.void,
-    execute: (workflow: Workflow.Any, executeOptions: {
-      readonly executionId: string
-      readonly payload: object
-      readonly discard: boolean
-    }) =>
-      executeOptions.discard
-        ? Effect.promise(() =>
-          startChild(workflow.name, {
-            workflowId: executeOptions.executionId,
-            args: [executeOptions.payload]
-          })
-        ).pipe(Effect.asVoid)
-        : Effect.tryPromise({
-          try: () =>
-            executeChild(workflow.name, {
-              workflowId: executeOptions.executionId,
-              args: [executeOptions.payload]
-            }),
-          catch: (cause) => cause
-        }).pipe(
-          Effect.exit,
-          Effect.map((exit) => new Workflow.Complete({ exit }))
-        ),
-    poll: () => Effect.succeed(Option.none()),
-    interrupt: (_workflow: Workflow.Any, _executionId: string) => Effect.sync(() => {
-      state.interrupted = true
-      state.status = "suspended"
-    }),
-    interruptUnsafe: (_workflow: Workflow.Any, _executionId: string) => Effect.sync(() => {
-      state.interrupted = true
-      state.status = "suspended"
-    }),
-    resume: (_workflow: Workflow.Any, _executionId: string) => Effect.sync(() => {
-      state.resumed = true
-      state.status = "running"
-    }),
-    activityExecute: (activity: Activity.Any, attempt: number) =>
-      Effect.gen(function*() {
-        const instance = yield* WorkflowEngine.WorkflowInstance
-        return yield* Effect.promise(() =>
-          scheduleActivity<Workflow.Result<unknown, unknown>>(
-            activity.name,
-            [
-              {
-                workflowName: instance.workflow.name,
-                executionId: instance.executionId,
-                attempt
-              } satisfies TemporalActivityExecutionContext
-            ],
-            activityOptions
-          )
-        )
-      }),
-    deferredResult: (deferred: DurableDeferred.Any) =>
-      Effect.sync(() => Option.fromNullishOr(state.deferreds.get(deferred.name))),
-    deferredDone: (options: {
-      readonly workflowName: string
-      readonly executionId: string
-      readonly deferredName: string
-      readonly exit: Exit.Exit<unknown, unknown>
-    }) =>
-      Effect.sync(() => {
-        if (!state.deferreds.has(options.deferredName)) {
-          state.deferreds.set(options.deferredName, options.exit)
-        }
-        state.resumed = true
-      }),
-    scheduleClock: (_workflow: Workflow.Any, { clock }: { readonly executionId: string; readonly clock: DurableClock }) =>
-      Effect.sync(() => {
-        const durationMs = Math.max(1, Duration.toMillis(clock.duration))
-        state.clocks.set(clock.name, { name: clock.name, durationMs })
-        completeClock(state, clock.name, clock.deferred.name, durationMs)
-      })
-  } as any) as WorkflowEngine.WorkflowEngine["Service"]
-}
-
-/**
- * Runs an Effect workflow implementation as a Temporal workflow function.
- *
- * The returned function is intended to be exported from a Temporal workflows
- * module under the same name used when starting the workflow.
- *
- * @since 1.0.0
- * @category Constructors
- */
-export const makeWorkflow = <
-  Name extends string,
-  Payload extends Workflow.AnyStructSchema,
-  Success extends Schema.Top,
-  Error extends Schema.Top,
-  R
->(
-  workflow: Workflow.Workflow<Name, Payload, Success, Error>,
-  execute: (payload: Payload["Type"], executionId: string) => Effect.Effect<Success["Type"], Error["Type"], R>,
-  options: TemporalWorkflowRuntimeOptions = {}
-): ((payload: Payload["Type"]) => Promise<Success["Type"]>) =>
-  async (payload) => {
-    const executionId = await runEffect(workflow.executionId(payload) as Effect.Effect<string, never, never>)
-    const state = makeRuntimeState(executionId)
-    installBaseHandlers(state)
-    const engine = makeWorkflowEngine(state, options)
-
-    while (true) {
-      if (state.interrupted) {
-        state.status = "suspended"
-        await waitForResume(state)
-        if (state.interrupted) {
-          state.interrupted = false
-        }
-      }
-
-      state.status = "running"
-      state.suspendedCause = undefined
-
-      const instance = WorkflowEngine.WorkflowInstance.initial(workflow, executionId)
-      instance.interrupted = state.interrupted
-
-      const result = await runEffect(
-        provideWorkflowServices(
-          execute(payload, executionId).pipe(Workflow.intoResult),
-          engine,
-          instance
-        ) as Effect.Effect<Workflow.Result<Success["Type"], Error["Type"]>, never, never>
-      )
-
-      state.result = result as any
-
-      if (result._tag === "Complete") {
-        state.status = "completed"
-        return await runEffect(result.exit as Effect.Effect<Success["Type"], Error["Type"], never>)
-      }
-
-      state.status = "suspended"
-      state.suspendedCause = result.cause
-      await waitForResume(state)
-    }
-  }
-
-/**
- * Converts Effect workflow activities into Temporal worker activity handlers.
- *
- * @since 1.0.0
- * @category Constructors
- */
-export const makeActivities = (
-  activities: Iterable<Activity.AnyWithProps>
-): Record<string, (context: TemporalActivityExecutionContext) => Promise<Workflow.Result<unknown, unknown>>> => {
-  const handlers: Record<string, (context: TemporalActivityExecutionContext) => Promise<Workflow.Result<unknown, unknown>>> = {}
-  for (const activity of activities) {
-    handlers[activity.name] = async (context) => {
-      const workflow = { name: context.workflowName } as Workflow.Any
-      const instance = WorkflowEngine.WorkflowInstance.initial(workflow, context.executionId)
-      const result = await runEffect(
-        provideWorkflowServices(
-          activity.executeEncoded.pipe(Workflow.intoResult),
-          makeWorkflowEngine(makeRuntimeState(context.executionId)),
-          instance
-        ).pipe(Effect.provideService(Activity.CurrentAttempt, context.attempt)) as Effect.Effect<
-          Workflow.Result<unknown, unknown>,
-          never,
-          never
-        >
-      )
-      return result
-    }
-  }
-  return handlers
 }
 
 /**
@@ -387,6 +153,243 @@ export const makeActivities = (
 export const waitForResume = async (
   state: TemporalWorkflowRuntimeState
 ): Promise<void> => {
-  await condition(() => state.resumed || state.interrupted)
+  await condition(() => state.resumed)
   state.resumed = false
 }
+
+/**
+ * @since 1.0.0
+ * @category Models
+ */
+export interface TemporalActivityInvocation {
+  readonly executionId: string
+  readonly attempt: number
+}
+
+/**
+ * @since 1.0.0
+ * @category Models
+ */
+export type TemporalActivityProxy =
+  | {
+    readonly local?: false | undefined
+    readonly options?: Parameters<typeof proxyActivities>[0] | undefined
+  }
+  | {
+    readonly local: true
+    readonly options?: Parameters<typeof proxyLocalActivities>[0] | undefined
+  }
+
+/**
+ * @since 1.0.0
+ * @category Models
+ */
+export interface TemporalWorkflowRuntimeOptions<
+  Payload,
+  Success,
+  Error,
+  R
+> {
+  readonly workflow: Workflow.Workflow<any, any, any, any>
+  readonly execute: (
+    payload: Payload,
+    executionId: string
+  ) => Effect.Effect<Success, Error, R>
+  readonly activityProxy?: TemporalActivityProxy | undefined
+  readonly provide?: ((<A, E, R2>(effect: Effect.Effect<A, E, R2>) => Effect.Effect<A, E, never>)) | undefined
+}
+
+const defaultActivityOptions = {
+  startToCloseTimeout: "10 minutes"
+} satisfies Parameters<typeof proxyActivities>[0]
+
+const AnyOrVoid = Schema.Union([Schema.Any, Schema.Void])
+const WorkflowResultSchema = Workflow.Result({
+  success: AnyOrVoid,
+  error: AnyOrVoid
+})
+const WorkflowResultCodec = Schema.toCodecJson(WorkflowResultSchema)
+const encodeWorkflowResult = Schema.encodeUnknownSync(WorkflowResultCodec)
+const decodeWorkflowResult = Schema.decodeUnknownSync(WorkflowResultCodec)
+
+const executionIdFromWorkflowId = (
+  workflowId: string
+): string => {
+  const index = workflowId.lastIndexOf("/")
+  return index === -1 ? workflowId : workflowId.slice(index + 1)
+}
+
+const unsupported = (message: string): Effect.Effect<never, never> =>
+  Effect.die(new Error(message))
+
+const makeActivityCaller = (
+  activityProxy: TemporalActivityProxy | undefined
+): Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>> =>
+  activityProxy?.local === true
+    ? proxyLocalActivities<Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>>(
+      activityProxy.options ?? defaultActivityOptions
+    )
+    : proxyActivities<Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>>(
+      activityProxy?.options ?? defaultActivityOptions
+    )
+
+const makeRuntimeEngine = (
+  state: TemporalWorkflowRuntimeState,
+  activityCaller: Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>
+): WorkflowEngine.WorkflowEngine["Service"] =>
+  WorkflowEngine.makeUnsafe({
+    register: () => unsupported("Workflow registration is not available inside a Temporal workflow runtime"),
+    execute: (workflow: Workflow.Any, options: any) =>
+      options.discard
+        ? Effect.promise(() =>
+          startChild(workflow.name, {
+            workflowId: options.executionId,
+            args: [options.payload]
+          })
+        ).pipe(Effect.asVoid) as any
+        : Effect.tryPromise({
+          try: () =>
+            executeChild(workflow.name, {
+              workflowId: options.executionId,
+              args: [options.payload]
+            }),
+          catch: (cause) => cause
+        }).pipe(
+          Effect.exit,
+          Effect.map((exit) => new Workflow.Complete({ exit }))
+        ) as any,
+    poll: () => unsupported("Workflow polling is not available inside a Temporal workflow runtime"),
+    interrupt: () => Effect.sync(() => {
+      state.interrupted = true
+      state.resumed = false
+      state.status = "suspended"
+    }),
+    interruptUnsafe: () => Effect.sync(() => {
+      state.interrupted = true
+      state.resumed = false
+      state.status = "suspended"
+    }),
+    resume: () => Effect.sync(() => {
+      state.interrupted = false
+      state.resumed = true
+      state.status = "running"
+    }),
+    activityExecute: Effect.fnUntraced(function*(activity, attempt) {
+      const invoke = activityCaller[activity.name]
+      if (invoke === undefined) {
+        return yield* unsupported(`Temporal activity "${activity.name}" is not registered on the worker`)
+      }
+      const instance = yield* WorkflowEngine.WorkflowInstance
+      const encoded = yield* Effect.tryPromise({
+        try: () => invoke({
+          executionId: instance.executionId,
+          attempt
+        }),
+        catch: (cause) => new Error(`Temporal activity "${activity.name}" failed`, { cause })
+      }).pipe(Effect.orDie)
+      return decodeWorkflowResult(encoded) as Workflow.Result<unknown, unknown>
+    }),
+    deferredResult: (deferred) =>
+      Effect.sync(() => {
+        const exit = state.deferreds.get(deferred.name)
+        return exit === undefined ? Option.none() : Option.some(exit)
+      }),
+    deferredDone: ({ deferredName, exit }) =>
+      Effect.sync(() => {
+        state.deferreds.set(deferredName, exit)
+        if (!state.interrupted) {
+          state.resumed = true
+          state.status = "running"
+        }
+      }),
+    scheduleClock: (_workflow, options) =>
+      Effect.sync(() => {
+        if (state.clocks.has(options.clock.name)) {
+          return
+        }
+        const clock = {
+          name: options.clock.name,
+          durationMs: Duration.toMillis(options.clock.duration)
+        } satisfies ScheduleClockSignal
+        state.clocks.set(clock.name, clock)
+        void sleep(clock.durationMs).then(() => {
+          state.deferreds.set(options.clock.deferred.name, Exit.void)
+          if (!state.interrupted) {
+            state.resumed = true
+            state.status = "running"
+          }
+        })
+      })
+  })
+
+/**
+ * @since 1.0.0
+ * @category Constructors
+ */
+export const makeWorkflow = <Payload, Success, Error, R>(
+  options: TemporalWorkflowRuntimeOptions<Payload, Success, Error, R>
+): ((payload: Payload) => Promise<Success>) => {
+  const activityCaller = makeActivityCaller(options.activityProxy)
+
+  return async (payload) => {
+    const executionId = executionIdFromWorkflowId(workflowInfo().workflowId)
+    const state = makeRuntimeState(executionId)
+    installBaseHandlers(state)
+
+    while (true) {
+      const instance = WorkflowEngine.WorkflowInstance.initial(options.workflow, executionId)
+      instance.interrupted = state.interrupted
+      const engine = makeRuntimeEngine(state, activityCaller)
+      const base = options.execute(payload, executionId).pipe(
+        Workflow.intoResult,
+        Effect.provideService(WorkflowEngine.WorkflowEngine, engine),
+        Effect.provideService(WorkflowEngine.WorkflowInstance, instance)
+      )
+      const program = options.provide === undefined ? base : options.provide(base)
+      const result = await Effect.runPromise(program as Effect.Effect<Workflow.Result<Success, Error>, never, never>)
+
+      if (result._tag === "Complete") {
+        state.status = "completed"
+        state.result = encodeWorkflowResult(result) as unknown as Workflow.ResultEncoded<unknown, unknown>
+        if (result.exit._tag === "Success") {
+          return result.exit.value as Success
+        }
+        throw Cause.squash(result.exit.cause)
+      }
+
+      state.status = "suspended"
+      state.suspendedCause = result.cause
+      await waitForResume(state)
+      state.suspendedCause = undefined
+    }
+  }
+}
+
+/**
+ * @since 1.0.0
+ * @category Constructors
+ */
+export const makeActivities = (
+  workflow: Workflow.Any,
+  activities: ReadonlyArray<Activity.Any>,
+  options?: {
+    readonly provide?: ((<A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, never>)) | undefined
+  } | undefined
+): Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>> =>
+  Object.fromEntries(
+    activities.map((activity) => [
+      activity.name,
+      async ({ attempt, executionId }: TemporalActivityInvocation) => {
+        const instance = WorkflowEngine.WorkflowInstance.initial(workflow, executionId)
+        const base = activity.executeEncoded.pipe(
+          Workflow.intoResult,
+          Effect.provideService(WorkflowEngine.WorkflowInstance, instance),
+          Effect.provideService(Activity.CurrentAttempt, attempt)
+        )
+        const program = options?.provide === undefined ? base : options.provide(base)
+        return encodeWorkflowResult(
+          await Effect.runPromise(program as Effect.Effect<Workflow.Result<any, any>, never, never>)
+        ) as unknown as Workflow.ResultEncoded<unknown, unknown>
+      }
+    ])
+  )

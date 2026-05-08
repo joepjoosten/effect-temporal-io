@@ -168,7 +168,7 @@ export const make = (
           resumeSignalName
         ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
       activityExecute: () =>
-        unsupported("Temporal activity execution bridge is not implemented yet"),
+        unsupported("Temporal activity execution is available from TemporalWorkflowRuntime.makeWorkflow, not the client-side engine"),
       deferredResult: (deferred: DurableDeferred.Any) =>
         Effect.gen(function*() {
           const instance = yield* WorkflowEngine.WorkflowInstance
