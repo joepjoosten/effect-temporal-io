@@ -1,15 +1,10 @@
 /**
  * @since 1.0.0
  */
-import {
-  NativeConnection,
-  type NativeConnectionOptions,
-  Worker,
-  type WorkerOptions
-} from "@temporalio/worker"
+import { NativeConnection, type NativeConnectionOptions, Worker, type WorkerOptions } from "@temporalio/worker"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
-import * as ServiceMap from "effect/ServiceMap"
 import type * as Scope from "effect/Scope"
 import { TemporalWorkerError } from "./TemporalError.js"
 
@@ -17,13 +12,13 @@ import { TemporalWorkerError } from "./TemporalError.js"
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalWorkerConnection extends NativeConnection {}
+export type TemporalWorkerConnection = NativeConnection
 
 /**
  * @since 1.0.0
  * @category Tags
  */
-export const TemporalWorkerConnection = ServiceMap.Service<TemporalWorkerConnection>(
+export const TemporalWorkerConnection = Context.Service<TemporalWorkerConnection>(
   "@effect-temporal/workflow/TemporalWorkerConnection"
 )
 
@@ -31,7 +26,7 @@ export const TemporalWorkerConnection = ServiceMap.Service<TemporalWorkerConnect
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalWorkerConnectionConfig extends NativeConnectionOptions {}
+export type TemporalWorkerConnectionConfig = NativeConnectionOptions
 
 /**
  * @since 1.0.0
@@ -48,7 +43,7 @@ export interface TemporalWorker {
  * @since 1.0.0
  * @category Tags
  */
-export const TemporalWorker = ServiceMap.Service<TemporalWorker>(
+export const TemporalWorker = Context.Service<TemporalWorker>(
   "@effect-temporal/workflow/TemporalWorker"
 )
 
@@ -63,6 +58,15 @@ const wrap = <A>(
         message,
         cause
       })
+  })
+
+const shutdownWorker = (worker: Worker): Effect.Effect<void> =>
+  Effect.sync(() => {
+    try {
+      worker.shutdown()
+    } catch {
+      // Worker.runUntil stops the worker before scoped finalizers run.
+    }
   })
 
 /**
@@ -100,12 +104,8 @@ export const make = (
         Worker.create({
           ...options,
           connection
-        })
-      ),
-      (worker) =>
-        Effect.sync(() => {
-          worker.shutdown()
-        }).pipe(Effect.orDie)
+        })),
+      shutdownWorker
     )
 
     return TemporalWorker.of({
@@ -113,9 +113,7 @@ export const make = (
       run: wrap("Temporal worker failed while running", () => unsafeWorker.run()),
       runUntil: <A>(thunk: () => Promise<A>) =>
         wrap("Temporal worker failed while running", () => unsafeWorker.runUntil(thunk)),
-      shutdown: Effect.sync(() => {
-        unsafeWorker.shutdown()
-      })
+      shutdown: shutdownWorker(unsafeWorker)
     })
   })
 
