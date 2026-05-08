@@ -153,6 +153,13 @@ export const make = (
           },
           interruptSignalName
         ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
+      interruptUnsafe: (workflow: Workflow.Any, executionId: string) =>
+        client.signal(
+          {
+            workflowId: workflowIdFor(workflow.name, executionId, config.workflowIdPrefix)
+          },
+          interruptSignalName
+        ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
       resume: (workflow: Workflow.Any, executionId: string) =>
         client.signal(
           {
@@ -176,7 +183,7 @@ export const make = (
             Effect.catchTag("TemporalRequestError", () => Effect.succeed(Option.none()))
           )
         }),
-      deferredDone: (_deferred: DurableDeferred.Any, options: any) =>
+      deferredDone: (options: any) =>
         client.signal(
           {
             workflowId: workflowIdFor(options.workflowName, options.executionId, config.workflowIdPrefix)

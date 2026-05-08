@@ -1,8 +1,20 @@
 /**
  * @since 1.0.0
  */
-import * as Duration from "effect/Duration"
+import {
+  condition,
+  defineQuery,
+  defineSignal,
+  executeChild,
+  proxyActivities,
+  proxyLocalActivities,
+  setHandler,
+  sleep,
+  startChild,
+  workflowInfo
+} from "@temporalio/workflow"
 import * as Cause from "effect/Cause"
+import * as Duration from "effect/Duration"
 import * as Effect from "effect/Effect"
 import * as Exit from "effect/Exit"
 import * as Option from "effect/Option"
@@ -10,16 +22,6 @@ import * as Schema from "effect/Schema"
 import * as Activity from "effect/unstable/workflow/Activity"
 import * as Workflow from "effect/unstable/workflow/Workflow"
 import * as WorkflowEngine from "effect/unstable/workflow/WorkflowEngine"
-import {
-  condition,
-  defineQuery,
-  defineSignal,
-  proxyActivities,
-  proxyLocalActivities,
-  setHandler,
-  sleep,
-  workflowInfo
-} from "@temporalio/workflow"
 import type {
   CompleteDeferredSignal,
   ScheduleClockSignal,
@@ -237,7 +239,25 @@ const makeRuntimeEngine = (
 ): WorkflowEngine.WorkflowEngine["Service"] =>
   WorkflowEngine.makeUnsafe({
     register: () => unsupported("Workflow registration is not available inside a Temporal workflow runtime"),
-    execute: () => unsupported("Nested workflow execution is not implemented for the Temporal workflow runtime"),
+    execute: (workflow: Workflow.Any, options: any) =>
+      options.discard
+        ? Effect.promise(() =>
+          startChild(workflow.name, {
+            workflowId: options.executionId,
+            args: [options.payload]
+          })
+        ).pipe(Effect.asVoid) as any
+        : Effect.tryPromise({
+          try: () =>
+            executeChild(workflow.name, {
+              workflowId: options.executionId,
+              args: [options.payload]
+            }),
+          catch: (cause) => cause
+        }).pipe(
+          Effect.exit,
+          Effect.map((exit) => new Workflow.Complete({ exit }))
+        ) as any,
     poll: () => unsupported("Workflow polling is not available inside a Temporal workflow runtime"),
     interrupt: () => Effect.sync(() => {
       state.interrupted = true

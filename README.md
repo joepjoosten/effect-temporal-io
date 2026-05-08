@@ -6,11 +6,10 @@ Effect-friendly wrappers around Temporal connections, workflow clients,
 workers, and the protocol primitives needed to map
 `effect/unstable/workflow` onto Temporal executions.
 
-The current implementation is an integration slice. Client, worker, workflow
-metadata, workflow-engine operations, queries, signals, deferred result
-protocols, and clock scheduling protocol primitives are present. Full
-workflow-runtime execution, activity bridging, and end-to-end
-`DurableDeferred` / `DurableClock` behavior are still in progress.
+The current implementation includes client, worker, workflow metadata,
+workflow-engine operations, workflow runtime execution, activity bridging,
+deferred result protocols, durable clock handling, and child workflow
+execution. Live Temporal end-to-end coverage is still being expanded.
 
 ## How Effect workflows interoperate with Temporal
 
@@ -95,8 +94,7 @@ export const checkoutWorkflowLayer = checkoutWorkflow.toLayer((payload, executio
 The workflow definition is normal TypeScript, but anything that runs inside a
 Temporal workflow must still follow Temporal workflow restrictions. Keep
 workflow code deterministic, avoid direct network / filesystem / random /
-wall-clock access in workflow code, and move side effects into activities once
-activity bridging is available.
+wall-clock access in workflow code, and move side effects into activities.
 
 ## Starting workflows from Effect
 
@@ -166,31 +164,29 @@ Effect.runPromise(Effect.provide(runWorker, workerLayer))
 ```
 
 The workflow bundle entrypoint is the file passed as `workflowsPath`. In that
-file, export Temporal workflow functions and install the Effect / Temporal
-protocol handlers for each running workflow:
+file, export Temporal workflow functions created by `TemporalWorkflowRuntime`:
 
 ```ts
 import { TemporalWorkflowRuntime } from "@effect-temporal/workflow"
+import {
+  checkoutWorkflow,
+  checkoutWorkflowProgram,
+  releaseInventory,
+  reserveInventory
+} from "./workflows.js"
 
-export async function CheckoutWorkflow(payload: {
-  readonly orderId: string
-  readonly customerId: string
-  readonly totalCents: number
-}) {
-  const state = TemporalWorkflowRuntime.makeRuntimeState(payload.orderId)
-  TemporalWorkflowRuntime.installBaseHandlers(state)
-
-  // The complete Effect workflow runtime adapter is still in progress.
-  // Today this is the place where the Temporal workflow entrypoint is wired
-  // to the registered Effect workflow implementation.
-  await TemporalWorkflowRuntime.waitForResume(state)
-
-  state.status = "completed"
-  return {
-    orderId: payload.orderId,
-    chargeId: "charge-123"
+export const CheckoutWorkflow = TemporalWorkflowRuntime.makeWorkflow({
+  workflow: checkoutWorkflow,
+  execute: checkoutWorkflowProgram,
+  activityProxy: {
+    options: { startToCloseTimeout: "10 minutes" }
   }
-}
+})
+
+export const activities = TemporalWorkflowRuntime.makeActivities(
+  checkoutWorkflow,
+  [reserveInventory, releaseInventory]
+)
 ```
 
 For local development, start Temporal first, then run one or more worker
@@ -206,10 +202,9 @@ namespace, and task queue.
 
 ## Deployment considerations
 
-- **Current package status:** treat
-  `packages/temporal/sample/effect-workflow-example.ts` as the target
-  `effect/unstable/workflow` usage shape. Not every construct in that sample
-  is executable through the Temporal adapter yet.
+- **Current package status:** the runtime adapter covers the sample's core
+  workflow execution, activity, durable deferred, durable clock, and child
+  workflow paths. Live Temporal e2e coverage is still the main validation gap.
 - **Determinism:** workflow code is replayed by Temporal. Do not call
   non-deterministic APIs directly from workflow code. Use Temporal workflow
   APIs or activities for time, randomness, network calls, database calls, and
@@ -217,9 +212,8 @@ namespace, and task queue.
 - **Worker isolation:** code imported by `workflowsPath` runs in Temporal's
   workflow isolate. Keep Node-only APIs and regular Effect services out of that
   bundle unless they are explicitly workflow-safe.
-- **Activities:** activity bridging is not complete yet. Until it is, model
-  activity-heavy examples as the intended API and keep production side effects
-  behind Temporal activities or outside the workflow runtime adapter.
+- **Activities:** activity bridging runs through `TemporalWorkflowRuntime`
+  activity proxies. Keep production side effects behind Temporal activities.
 - **Signals and queries:** the integration reserves query / signal names that
   start with `__effect_workflow_`. Avoid reusing those names in application
   workflow code.
