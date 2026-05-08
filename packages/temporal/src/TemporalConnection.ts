@@ -1,13 +1,10 @@
 /**
  * @since 1.0.0
  */
-import {
-  Connection,
-  type ConnectionOptions
-} from "@temporalio/client"
+import { Connection, type ConnectionOptions } from "@temporalio/client"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
-import * as Context from "effect/Context"
 import type * as Scope from "effect/Scope"
 import { TemporalConnectionError } from "./TemporalError.js"
 
@@ -15,7 +12,7 @@ import { TemporalConnectionError } from "./TemporalError.js"
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalConnection extends Connection {}
+export type TemporalConnection = Connection
 
 /**
  * @since 1.0.0
@@ -29,7 +26,7 @@ export const TemporalConnection = Context.Service<TemporalConnection>(
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalConnectionConfig extends ConnectionOptions {}
+export type TemporalConnectionConfig = ConnectionOptions
 
 /**
  * @since 1.0.0
@@ -56,5 +53,4 @@ export const make = (
  */
 export const layer = (
   options: TemporalConnectionConfig = {}
-): Layer.Layer<TemporalConnection, TemporalConnectionError> =>
-  Layer.effect(TemporalConnection)(make(options))
+): Layer.Layer<TemporalConnection, TemporalConnectionError> => Layer.effect(TemporalConnection)(make(options))

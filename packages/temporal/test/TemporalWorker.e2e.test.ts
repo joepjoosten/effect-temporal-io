@@ -1,5 +1,5 @@
-import { TestWorkflowEnvironment } from "@temporalio/testing"
 import { afterEach, beforeEach, describe, expect, it } from "@effect/vitest"
+import { TestWorkflowEnvironment } from "@temporalio/testing"
 import * as Effect from "effect/Effect"
 import { fileURLToPath } from "node:url"
 import * as TemporalClient from "../src/TemporalClient.js"

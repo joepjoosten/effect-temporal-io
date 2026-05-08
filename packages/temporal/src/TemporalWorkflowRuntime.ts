@@ -134,7 +134,7 @@ export const installBaseHandlers = (
     state.resumed = true
     state.status = "running"
   })
-  setHandler(completeDeferredSignal, ({ name, exit }) => {
+  setHandler(completeDeferredSignal, ({ exit, name }) => {
     state.deferreds.set(name, exit)
     if (!state.interrupted) {
       state.resumed = true
@@ -219,23 +219,29 @@ const executionIdFromWorkflowId = (
   return index === -1 ? workflowId : workflowId.slice(index + 1)
 }
 
-const unsupported = (message: string): Effect.Effect<never, never> =>
-  Effect.die(new Error(message))
+const unsupported = (message: string): Effect.Effect<never, never> => Effect.die(new Error(message))
 
 const makeActivityCaller = (
   activityProxy: TemporalActivityProxy | undefined
 ): Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>> =>
   activityProxy?.local === true
-    ? proxyLocalActivities<Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>>(
+    ? proxyLocalActivities<
+      Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>
+    >(
       activityProxy.options ?? defaultActivityOptions
     )
-    : proxyActivities<Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>>(
+    : proxyActivities<
+      Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>
+    >(
       activityProxy?.options ?? defaultActivityOptions
     )
 
 const makeRuntimeEngine = (
   state: TemporalWorkflowRuntimeState,
-  activityCaller: Record<string, (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>>
+  activityCaller: Record<
+    string,
+    (input: TemporalActivityInvocation) => Promise<Workflow.ResultEncoded<unknown, unknown>>
+  >
 ): WorkflowEngine.WorkflowEngine["Service"] =>
   WorkflowEngine.makeUnsafe({
     register: () => unsupported("Workflow registration is not available inside a Temporal workflow runtime"),
@@ -259,21 +265,24 @@ const makeRuntimeEngine = (
           Effect.map((exit) => new Workflow.Complete({ exit }))
         ) as any,
     poll: () => unsupported("Workflow polling is not available inside a Temporal workflow runtime"),
-    interrupt: () => Effect.sync(() => {
-      state.interrupted = true
-      state.resumed = false
-      state.status = "suspended"
-    }),
-    interruptUnsafe: () => Effect.sync(() => {
-      state.interrupted = true
-      state.resumed = false
-      state.status = "suspended"
-    }),
-    resume: () => Effect.sync(() => {
-      state.interrupted = false
-      state.resumed = true
-      state.status = "running"
-    }),
+    interrupt: () =>
+      Effect.sync(() => {
+        state.interrupted = true
+        state.resumed = false
+        state.status = "suspended"
+      }),
+    interruptUnsafe: () =>
+      Effect.sync(() => {
+        state.interrupted = true
+        state.resumed = false
+        state.status = "suspended"
+      }),
+    resume: () =>
+      Effect.sync(() => {
+        state.interrupted = false
+        state.resumed = true
+        state.status = "running"
+      }),
     activityExecute: Effect.fnUntraced(function*(activity, attempt) {
       const invoke = activityCaller[activity.name]
       if (invoke === undefined) {
@@ -281,10 +290,11 @@ const makeRuntimeEngine = (
       }
       const instance = yield* WorkflowEngine.WorkflowInstance
       const encoded = yield* Effect.tryPromise({
-        try: () => invoke({
-          executionId: instance.executionId,
-          attempt
-        }),
+        try: () =>
+          invoke({
+            executionId: instance.executionId,
+            attempt
+          }),
         catch: (cause) => new Error(`Temporal activity "${activity.name}" failed`, { cause })
       }).pipe(Effect.orDie)
       return decodeWorkflowResult(encoded) as Workflow.Result<unknown, unknown>
@@ -328,7 +338,7 @@ const makeRuntimeEngine = (
  */
 export const makeWorkflow = <Payload, Success, Error, R>(
   options: TemporalWorkflowRuntimeOptions<Payload, Success, Error, R>
-): ((payload: Payload) => Promise<Success>) => {
+): (payload: Payload) => Promise<Success> => {
   const activityCaller = makeActivityCaller(options.activityProxy)
 
   return async (payload) => {

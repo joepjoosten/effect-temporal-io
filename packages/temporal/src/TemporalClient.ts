@@ -10,11 +10,11 @@ import {
   type WorkflowResultType,
   type WorkflowStartOptions
 } from "@temporalio/client"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 import * as Option from "effect/Option"
 import * as Schema from "effect/Schema"
-import * as Context from "effect/Context"
 import type * as Scope from "effect/Scope"
 import * as TemporalConnection from "./TemporalConnection.js"
 import { TemporalRequestError } from "./TemporalError.js"
@@ -107,24 +107,23 @@ export const make = (
 
     return TemporalWorkflowClient.of({
       unsafeClient: client,
-      start: (workflow, startOptions) =>
-        wrap("Failed to start workflow", () => client.start(workflow, startOptions)),
+      start: (workflow, startOptions) => wrap("Failed to start workflow", () => client.start(workflow, startOptions)),
       execute: (workflow, startOptions) =>
         wrap("Failed to execute workflow", () => client.execute(workflow, startOptions)),
-      describe: ({ workflowId, runId }) =>
+      describe: ({ runId, workflowId }) =>
         wrap("Failed to describe workflow", () => client.getHandle(workflowId, runId).describe()),
-      result: ({ workflowId, runId }, followRuns) =>
+      result: ({ runId, workflowId }, followRuns) =>
         wrap(
           "Failed to fetch workflow result",
           () => client.result(workflowId, runId, followRuns === undefined ? undefined : { followRuns })
         ),
-      cancel: ({ workflowId, runId }) =>
+      cancel: ({ runId, workflowId }) =>
         wrap("Failed to cancel workflow", async () => {
           await client.getHandle(workflowId, runId).cancel()
         }),
-      query: ({ workflowId, runId }, query, ...args) =>
+      query: ({ runId, workflowId }, query, ...args) =>
         wrap("Failed to query workflow", () => client.getHandle(workflowId, runId).query(query, ...args)),
-      signal: ({ workflowId, runId }, signal, ...args) =>
+      signal: ({ runId, workflowId }, signal, ...args) =>
         wrap("Failed to signal workflow", async () => {
           await client.getHandle(workflowId, runId).signal(signal, ...args)
         })
@@ -144,8 +143,7 @@ export const layer = (
  * @since 1.0.0
  * @category Refinements
  */
-export const isWorkflowFailure = (error: unknown): error is WorkflowFailedError =>
-  error instanceof WorkflowFailedError
+export const isWorkflowFailure = (error: unknown): error is WorkflowFailedError => error instanceof WorkflowFailedError
 
 /**
  * @since 1.0.0

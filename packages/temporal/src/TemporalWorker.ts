@@ -1,15 +1,10 @@
 /**
  * @since 1.0.0
  */
-import {
-  NativeConnection,
-  type NativeConnectionOptions,
-  Worker,
-  type WorkerOptions
-} from "@temporalio/worker"
+import { NativeConnection, type NativeConnectionOptions, Worker, type WorkerOptions } from "@temporalio/worker"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
-import * as Context from "effect/Context"
 import type * as Scope from "effect/Scope"
 import { TemporalWorkerError } from "./TemporalError.js"
 
@@ -17,7 +12,7 @@ import { TemporalWorkerError } from "./TemporalError.js"
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalWorkerConnection extends NativeConnection {}
+export type TemporalWorkerConnection = NativeConnection
 
 /**
  * @since 1.0.0
@@ -31,7 +26,7 @@ export const TemporalWorkerConnection = Context.Service<TemporalWorkerConnection
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalWorkerConnectionConfig extends NativeConnectionOptions {}
+export type TemporalWorkerConnectionConfig = NativeConnectionOptions
 
 /**
  * @since 1.0.0
@@ -109,8 +104,7 @@ export const make = (
         Worker.create({
           ...options,
           connection
-        })
-      ),
+        })),
       shutdownWorker
     )
 

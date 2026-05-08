@@ -1,21 +1,26 @@
 /**
  * @since 1.0.0
  */
-import { type WorkflowFailedError, WorkflowExecutionAlreadyStartedError } from "@temporalio/client"
+import { WorkflowExecutionAlreadyStartedError, type WorkflowFailedError } from "@temporalio/client"
+import * as Context from "effect/Context"
 import * as Duration from "effect/Duration"
 import * as Effect from "effect/Effect"
 import * as Exit from "effect/Exit"
 import * as Layer from "effect/Layer"
 import * as Option from "effect/Option"
 import * as Ref from "effect/Ref"
-import * as Context from "effect/Context"
 import { type DurableClock } from "effect/unstable/workflow/DurableClock"
 import type * as DurableDeferred from "effect/unstable/workflow/DurableDeferred"
 import * as Workflow from "effect/unstable/workflow/Workflow"
 import * as WorkflowEngine from "effect/unstable/workflow/WorkflowEngine"
 import * as TemporalClient from "./TemporalClient.js"
 import { TemporalRequestError, TemporalWorkflowEngineError } from "./TemporalError.js"
-import type { CompleteDeferredSignal, ScheduleClockSignal, TemporalDeferredResult, TemporalWorkflowState } from "./TemporalWorkflowProtocol.js"
+import type {
+  CompleteDeferredSignal,
+  ScheduleClockSignal,
+  TemporalDeferredResult,
+  TemporalWorkflowState
+} from "./TemporalWorkflowProtocol.js"
 import {
   completeDeferredSignalName,
   deferredResultQueryName,
@@ -49,7 +54,7 @@ export const TemporalWorkflowRegistry = Context.Service<
  * @since 1.0.0
  * @category Models
  */
-export interface TemporalWorkflowRegistry extends Map<string, Workflow.Any> {}
+export type TemporalWorkflowRegistry = Map<string, Workflow.Any>
 
 const unsupported = (message: string): Effect.Effect<never, never> =>
   Effect.die(
@@ -65,8 +70,7 @@ const exitFromFailure = (error: WorkflowFailedError | unknown): Exit.Exit<never,
   return Exit.fail(error)
 }
 
-const completed = <A, E>(exit: Exit.Exit<A, E>): Workflow.Result<A, E> =>
-  new Workflow.Complete({ exit })
+const completed = <A, E>(exit: Exit.Exit<A, E>): Workflow.Result<A, E> => new Workflow.Complete({ exit })
 
 /**
  * @since 1.0.0
@@ -133,9 +137,11 @@ export const make = (
               workflowStateQueryName
             ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.succeed<TemporalWorkflowState | null>(null)))
             if (state?.status === "suspended") {
-              return Option.some(new Workflow.Suspended({
-                cause: undefined
-              }))
+              return Option.some(
+                new Workflow.Suspended({
+                  cause: undefined
+                })
+              )
             }
             return Option.none()
           }
@@ -168,7 +174,9 @@ export const make = (
           resumeSignalName
         ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
       activityExecute: () =>
-        unsupported("Temporal activity execution is available from TemporalWorkflowRuntime.makeWorkflow, not the client-side engine"),
+        unsupported(
+          "Temporal activity execution is available from TemporalWorkflowRuntime.makeWorkflow, not the client-side engine"
+        ),
       deferredResult: (deferred: DurableDeferred.Any) =>
         Effect.gen(function*() {
           const instance = yield* WorkflowEngine.WorkflowInstance
@@ -179,7 +187,9 @@ export const make = (
             deferredResultQueryName,
             deferred.name
           ).pipe(
-            Effect.map((result) => result.found ? Option.some(result.exit as Exit.Exit<unknown, unknown>) : Option.none()),
+            Effect.map((result) =>
+              result.found ? Option.some(result.exit as Exit.Exit<unknown, unknown>) : Option.none()
+            ),
             Effect.catchTag("TemporalRequestError", () => Effect.succeed(Option.none()))
           )
         }),
@@ -194,7 +204,10 @@ export const make = (
             exit: options.exit
           } satisfies CompleteDeferredSignal
         ).pipe(Effect.catchTag("TemporalRequestError", () => Effect.void)),
-      scheduleClock: (workflow: Workflow.Any, options: { readonly executionId: string; readonly clock: DurableClock }) =>
+      scheduleClock: (
+        workflow: Workflow.Any,
+        options: { readonly executionId: string; readonly clock: DurableClock }
+      ) =>
         client.signal(
           {
             workflowId: workflowIdFor(workflow.name, options.executionId, config.workflowIdPrefix)
