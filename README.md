@@ -9,7 +9,8 @@ workers, and the protocol primitives needed to map
 The current implementation includes client, worker, workflow metadata,
 workflow-engine operations, workflow runtime execution, activity bridging,
 deferred result protocols, durable clock handling, and child workflow
-execution. Live Temporal end-to-end coverage is still being expanded.
+execution. Initial live Temporal end-to-end coverage is in place for the
+worker/client path, and broader runtime coverage is still being expanded.
 
 ## How Effect workflows interoperate with Temporal
 
@@ -204,7 +205,10 @@ namespace, and task queue.
 
 - **Current package status:** the runtime adapter covers the sample's core
   workflow execution, activity, durable deferred, durable clock, and child
-  workflow paths. Live Temporal e2e coverage is still the main validation gap.
+  workflow paths. The repository has initial live Temporal e2e coverage for
+  `TemporalWorker` / `TemporalClient` through `@temporalio/testing`; broader
+  live coverage for the full Effect workflow-runtime surface remains the main
+  validation gap.
 - **Determinism:** workflow code is replayed by Temporal. Do not call
   non-deterministic APIs directly from workflow code. Use Temporal workflow
   APIs or activities for time, randomness, network calls, database calls, and
