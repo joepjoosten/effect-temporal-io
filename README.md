@@ -43,6 +43,28 @@ Effect program can call `workflow.execute`, `workflow.poll`,
 those calls into Temporal workflow start, result, describe, query, and signal
 operations.
 
+## Comparison with Effect workflow engines
+
+`TemporalWorkflowEngine.layer` is intended to be the Temporal-backed
+`WorkflowEngine` layer you provide to Effect workflow programs instead of the
+built-in in-memory engine or the Effect cluster engine. It is not just a
+client-side wrapper, though: a Temporal-backed workflow also needs Temporal
+workers that export workflow functions through `TemporalWorkflowRuntime` and
+activity handlers through `TemporalWorkflowRuntime.makeActivities`.
+
+| Engine | Backing runtime | Best for | Main difference |
+| --- | --- | --- | --- |
+| `WorkflowEngine.layerMemory` | Current process memory | Tests, local development, simple single-process workflows | No external infrastructure, but executions are not durable across process death |
+| `ClusterWorkflowEngine.layer` | Effect Cluster, sharding, and `MessageStorage` | Effect-native distributed durable workflows | Durability and routing are implemented through Effect cluster entities and storage |
+| `TemporalWorkflowEngine.layer` | Temporal server and Temporal workers | Temporal-backed durable workflow orchestration | Temporal owns replay, scheduling, task queues, worker execution, signals, and queries |
+
+In practice, swapping from the memory or cluster engine to Temporal means
+providing `TemporalWorkflowEngine.layer` on the client side and running a
+matching Temporal worker process for the same task queue. Workflow code that
+runs inside Temporal must also follow Temporal workflow determinism rules:
+avoid direct network, filesystem, randomness, and wall-clock access in workflow
+code, and move those side effects into activities.
+
 Workflow IDs are derived from the Effect workflow name and execution ID:
 
 ```ts
