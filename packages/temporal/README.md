@@ -42,6 +42,68 @@ The workflow-side adapter lives in `TemporalWorkflowRuntime`:
 
 The client-side adapter lives in `TemporalWorkflowEngine` and is used by normal Effect workflow programs to start, poll, interrupt, resume, complete deferreds, and schedule durable clocks against Temporal workflow executions.
 
+## Testing Temporal-backed workflows
+
+Use `@effect-temporal/testing` for tests that should run against Temporal test
+infrastructure without repeating connection, namespace, task queue, and worker
+setup in every test file.
+
+```ts
+import { describe, expect, it } from "@effect/vitest"
+import * as TemporalTesting from "@effect-temporal/testing"
+import * as Effect from "effect/Effect"
+
+describe("checkout workflow", () => {
+  it("runs with a Temporal test worker", async () => {
+    const program = Effect.scoped(
+      Effect.gen(function*() {
+        const environment = yield* TemporalTesting.makeTimeSkipping()
+        const taskQueue = TemporalTesting.makeTaskQueue("checkout")
+
+        const executeWorkflow = checkoutWorkflow.execute({
+          orderId: "ord_123",
+          customerId: "cus_123",
+          totalCents: 4200
+        }).pipe(
+          Effect.provide(
+            TemporalTesting.workflowEngineLayer({
+              taskQueue,
+              workflowIdPrefix: "test"
+            })
+          ),
+          Effect.provideService(
+            TemporalTesting.TemporalTestEnvironment,
+            environment
+          ),
+          Effect.scoped
+        )
+
+        return yield* TemporalTesting.runWorkerUntil(
+          {
+            taskQueue,
+            workflowsPath
+          },
+          () => Effect.runPromise(executeWorkflow)
+        ).pipe(
+          Effect.provideService(
+            TemporalTesting.TemporalTestEnvironment,
+            environment
+          )
+        )
+      })
+    )
+
+    await expect(Effect.runPromise(program)).resolves.toEqual({
+      orderId: "ord_123",
+      chargeId: "charge-123"
+    })
+  })
+})
+```
+
+The repository e2e tests use the same helpers to dogfood the testing package
+while still running a real Temporal test server and worker.
+
 ## Example: Full Effect Workflow Surface
 
 The maintained, type-checked example lives in
