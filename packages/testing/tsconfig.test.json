@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.test.json",
   "include": ["test"],
   "references": [
-    { "path": "tsconfig.src.json" },
-    { "path": "../testing/tsconfig.src.json" }
+    { "path": "tsconfig.src.json" }
   ],
   "compilerOptions": {
     "types": ["node"],

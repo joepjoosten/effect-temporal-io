@@ -6,6 +6,12 @@ Effect-friendly wrappers around Temporal connections, workflow clients,
 workers, and the protocol primitives needed to map
 `effect/unstable/workflow` onto Temporal executions.
 
+The repository also includes `@effect-temporal/testing`, a small helper package
+for writing fast Temporal-backed tests. It provides scoped test environments
+from `@temporalio/testing`, unique task queue helpers, and convenience
+constructors / layers for workflow clients, workflow engines, and workers that
+automatically use the test environment address and namespace.
+
 The current implementation includes client, worker, workflow metadata,
 workflow-engine operations, workflow runtime execution, activity bridging,
 deferred result protocols, durable clock handling, and child workflow
