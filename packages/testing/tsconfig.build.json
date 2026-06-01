@@ -7,10 +7,12 @@
     "declarationDir": "build/dts",
     "stripInternal": true,
     "paths": {
+      "@effect-temporal/client": ["./packages/client/build/dts/index.d.ts"],
+      "@effect-temporal/client/*": ["./packages/client/build/dts/*.d.ts"],
       "@effect-temporal/testing": ["./packages/testing/src/index.js"],
       "@effect-temporal/testing/*": ["./packages/testing/src/*.js"],
-      "@effect-temporal/workflow": ["./packages/temporal/build/dts/index.d.ts"],
-      "@effect-temporal/workflow/*": ["./packages/temporal/build/dts/*.d.ts"]
+      "@effect-temporal/workflow": ["./packages/workflow/build/dts/index.d.ts"],
+      "@effect-temporal/workflow/*": ["./packages/workflow/build/dts/*.d.ts"]
     }
   }
 }

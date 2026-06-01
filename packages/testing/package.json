@@ -24,8 +24,9 @@
     "coverage": "vitest --coverage"
   },
   "dependencies": {
+    "@effect-temporal/client": "workspace:*",
     "@effect-temporal/workflow": "workspace:*",
-    "@temporalio/testing": "^1.15.0",
+    "@temporalio/testing": "^1.17.2",
     "effect": "4.0.0-beta.64"
   },
   "effect": {

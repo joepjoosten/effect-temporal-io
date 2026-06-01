@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.src.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "tsBuildInfoFile": ".tsbuildinfo/build.tsbuildinfo",
+    "outDir": "build/esm",
+    "declarationDir": "build/dts",
+    "stripInternal": true,
+    "paths": {
+      "@effect-temporal/client": ["./packages/client/build/dts/index.d.ts"],
+      "@effect-temporal/client/*": ["./packages/client/build/dts/*.d.ts"]
+    }
+  },
+  "references": [
+    { "path": "../client/tsconfig.build.json" }
+  ]
+}

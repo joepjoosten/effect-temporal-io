@@ -41,9 +41,9 @@
       "@effect-temporal/client/*": ["./packages/client/src/*.js"],
       "@effect-temporal/testing": ["./packages/testing/src/index.js"],
       "@effect-temporal/testing/*": ["./packages/testing/src/*.js"],
-      "@effect-temporal/workflow": ["./packages/temporal/src/index.js"],
-      "@effect-temporal/workflow/*": ["./packages/temporal/src/*.js"],
-      "@effect-temporal/workflow/test/*": ["./packages/temporal/test/*.js"]
+      "@effect-temporal/workflow": ["./packages/workflow/src/index.js"],
+      "@effect-temporal/workflow/*": ["./packages/workflow/src/*.js"],
+      "@effect-temporal/workflow/test/*": ["./packages/workflow/test/*.js"]
     }
   }
 }

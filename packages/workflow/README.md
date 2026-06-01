@@ -6,7 +6,8 @@ Effect v4 / effect-smol integration for Temporal.
 
 This package currently provides:
 
-- Effect-wrapped Temporal connection and workflow client layers
+- Worker/runtime integration for Temporal-backed Effect workflows
+- Compatibility re-exports for client connection and workflow client layers from `@effect-temporal/client`
 - Effect-wrapped Temporal worker connection / worker layers
 - Shared Temporal workflow protocol primitives for signals / queries
 - Workflow metadata / registration primitives based on `effect/unstable/workflow`
@@ -25,7 +26,7 @@ This package currently provides:
 
 ## Status
 
-The package now has client, worker, protocol, workflow-runtime, activity-bridge, durable deferred / clock, and child workflow support for the Effect workflow surface used by the sample.
+The package now has worker, protocol, workflow-runtime, activity-bridge, durable deferred / clock, and child workflow support for the Effect workflow surface used by the sample. Client-side services live in `@effect-temporal/client` and are re-exported here for compatibility.
 
 The remaining gap is validation breadth: the current repository includes initial Temporal test-server end-to-end coverage for the worker/client path, but the full runtime bridge still needs broader live Temporal e2e verification across activities, deferreds, durable clocks, lifecycle signals, and child workflows.
 

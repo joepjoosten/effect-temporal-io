@@ -84,7 +84,7 @@ of creating a duplicate.
 ## Defining workflows
 
 The maintained example lives in
-[`packages/temporal/sample/effect-workflow-example.ts`](./packages/temporal/sample/effect-workflow-example.ts).
+[`packages/workflow/sample/effect-workflow-example.ts`](./packages/workflow/sample/effect-workflow-example.ts).
 It shows the intended `effect/unstable/workflow` shape:
 
 ```ts

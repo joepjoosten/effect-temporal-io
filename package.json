@@ -30,7 +30,7 @@
     "@eslint/compat": "1.2.2",
     "@eslint/eslintrc": "3.1.0",
     "@eslint/js": "9.13.0",
-    "@temporalio/testing": "^1.15.0",
+    "@temporalio/testing": "^1.17.2",
     "@types/node": "^22.8.5",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",

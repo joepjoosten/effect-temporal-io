@@ -21,8 +21,22 @@ const scopedAlias = (scope: string, name: string) => {
       target,
       "TemporalConnection"
     ),
+    [`@effect-temporal/${scope}/TemporalDataConverter`]: path.join(
+      __dirname,
+      "packages",
+      name,
+      target,
+      "TemporalDataConverter"
+    ),
     [`@effect-temporal/${scope}/TemporalError`]: path.join(__dirname, "packages", name, target, "TemporalError"),
     [`@effect-temporal/${scope}/TemporalWorker`]: path.join(__dirname, "packages", name, target, "TemporalWorker"),
+    [`@effect-temporal/${scope}/TemporalWorkflowClient`]: path.join(
+      __dirname,
+      "packages",
+      name,
+      target,
+      "TemporalWorkflowClient"
+    ),
     [`@effect-temporal/${scope}/TemporalWorkflowEngine`]: path.join(
       __dirname,
       "packages",
@@ -51,9 +65,10 @@ const config: UserConfig = {
     },
     include: ["test/**/*.test.ts"],
     alias: {
-      ...alias("temporal"),
+      ...alias("workflow"),
       ...alias("testing"),
-      ...scopedAlias("workflow", "temporal"),
+      ...scopedAlias("client", "client"),
+      ...scopedAlias("workflow", "workflow"),
       ...scopedAlias("testing", "testing")
     }
   }

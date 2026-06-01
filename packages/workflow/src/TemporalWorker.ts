@@ -1,6 +1,7 @@
 /**
  * @since 1.0.0
  */
+import * as TemporalDataConverter from "@effect-temporal/client/TemporalDataConverter"
 import { NativeConnection, type NativeConnectionOptions, Worker, type WorkerOptions } from "@temporalio/worker"
 import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
@@ -119,9 +120,37 @@ export const make = (
 
 /**
  * @since 1.0.0
+ * @category Constructors
+ */
+export const makeWithDataConverter = (
+  options: Omit<WorkerOptions, "connection" | "dataConverter">
+): Effect.Effect<
+  TemporalWorker,
+  TemporalWorkerError,
+  TemporalWorkerConnection | TemporalDataConverter.TemporalDataConverter | Scope.Scope
+> =>
+  Effect.gen(function*() {
+    const dataConverter = yield* TemporalDataConverter.TemporalDataConverter
+    return yield* make({ ...options, dataConverter })
+  })
+
+/**
+ * @since 1.0.0
  * @category Layers
  */
 export const layer = (
   options: Omit<WorkerOptions, "connection">
 ): Layer.Layer<TemporalWorker, TemporalWorkerError, TemporalWorkerConnection> =>
   Layer.effect(TemporalWorker)(make(options))
+
+/**
+ * @since 1.0.0
+ * @category Layers
+ */
+export const layerWithDataConverter = (
+  options: Omit<WorkerOptions, "connection" | "dataConverter">
+): Layer.Layer<
+  TemporalWorker,
+  TemporalWorkerError,
+  TemporalWorkerConnection | TemporalDataConverter.TemporalDataConverter
+> => Layer.effect(TemporalWorker)(makeWithDataConverter(options))

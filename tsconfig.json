@@ -3,7 +3,7 @@
   "include": [],
   "references": [
     { "path": "packages/client" },
-    { "path": "packages/temporal" },
+    { "path": "packages/workflow" },
     { "path": "packages/testing" }
   ]
 }

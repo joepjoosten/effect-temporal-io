@@ -3,9 +3,11 @@
 Testing helpers for `@effect-temporal/workflow`.
 
 This package provides scoped Effect constructors for Temporal test servers,
-workflow clients, workflow engines, and workers. The helpers use
+workflow clients, workflow engines, and workers. Client helpers use
+`@effect-temporal/client`, while workflow engine and worker helpers use
+`@effect-temporal/workflow`. The helpers use
 `@temporalio/testing` and automatically wire the test environment address and
-namespace into the workflow package services.
+namespace into the package services.
 
 ```ts
 import * as TemporalTesting from "@effect-temporal/testing"

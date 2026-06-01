@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "<PLACEHOLDER>",
-    "directory": "packages/temporal"
+    "directory": "packages/workflow"
   },
   "publishConfig": {
     "access": "public",
@@ -24,9 +24,10 @@
     "coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@temporalio/client": "^1.15.0",
-    "@temporalio/worker": "^1.15.0",
-    "@temporalio/workflow": "^1.15.0",
+    "@effect-temporal/client": "workspace:*",
+    "@temporalio/client": "^1.17.2",
+    "@temporalio/worker": "^1.17.2",
+    "@temporalio/workflow": "^1.17.2",
     "effect": "4.0.0-beta.64"
   },
   "effect": {

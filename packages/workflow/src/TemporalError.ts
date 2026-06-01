@@ -7,27 +7,12 @@ import * as Data from "effect/Data"
  * @since 1.0.0
  * @category Errors
  */
-export class TemporalConnectionError extends Data.TaggedError("TemporalConnectionError")<{
-  readonly message: string
-  readonly cause: unknown
-}> {
-  constructor(props: { readonly message: string; readonly cause: unknown }) {
-    super(props)
-  }
-}
-
-/**
- * @since 1.0.0
- * @category Errors
- */
-export class TemporalRequestError extends Data.TaggedError("TemporalRequestError")<{
-  readonly message: string
-  readonly cause: unknown
-}> {
-  constructor(props: { readonly message: string; readonly cause: unknown }) {
-    super(props)
-  }
-}
+export {
+  TemporalClientError,
+  TemporalClientError as TemporalRequestError,
+  TemporalConnectionError,
+  TemporalValidationError
+} from "@effect-temporal/client/TemporalError"
 
 /**
  * @since 1.0.0

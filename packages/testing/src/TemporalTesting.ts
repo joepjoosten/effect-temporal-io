@@ -1,8 +1,10 @@
 /**
  * @since 1.0.0
  */
-import * as TemporalClient from "@effect-temporal/workflow/TemporalClient"
-import * as TemporalConnection from "@effect-temporal/workflow/TemporalConnection"
+import * as TemporalConnection from "@effect-temporal/client/TemporalConnection"
+import * as TemporalDataConverter from "@effect-temporal/client/TemporalDataConverter"
+import type * as TemporalClientError from "@effect-temporal/client/TemporalError"
+import * as TemporalClient from "@effect-temporal/client/TemporalWorkflowClient"
 import type * as TemporalError from "@effect-temporal/workflow/TemporalError"
 import * as TemporalWorker from "@effect-temporal/workflow/TemporalWorker"
 import * as TemporalWorkflowEngine from "@effect-temporal/workflow/TemporalWorkflowEngine"
@@ -65,6 +67,14 @@ export type LocalOptions = Parameters<typeof TestWorkflowEnvironment.createLocal
  * @category Models
  */
 export type TemporalTestWorkerOptions = Parameters<typeof TemporalWorker.make>[0]
+
+/**
+ * @since 1.0.0
+ * @category Models
+ */
+export type TemporalTestClientError =
+  | TemporalClientError.TemporalConnectionError
+  | TemporalClientError.TemporalClientError
 
 const fromUnsafeEnvironment = (
   environment: TestWorkflowEnvironment
@@ -168,7 +178,7 @@ const workerNamespaceConfig = (
  */
 export const makeConnection: Effect.Effect<
   TemporalConnection.TemporalConnection,
-  TemporalError.TemporalConnectionError,
+  TemporalClientError.TemporalConnectionError,
   TemporalTestEnvironment | Scope.Scope
 > = Effect.gen(function*() {
   const environment = yield* TemporalTestEnvironment
@@ -185,7 +195,7 @@ export const makeClient = (
   options: Omit<TemporalClient.TemporalWorkflowClientConfig, "connection" | "namespace"> = {}
 ): Effect.Effect<
   TemporalClient.TemporalWorkflowClient,
-  TemporalError.TemporalConnectionError,
+  TemporalTestClientError,
   TemporalTestEnvironment | Scope.Scope
 > =>
   Effect.gen(function*() {
@@ -194,6 +204,32 @@ export const makeClient = (
     return yield* TemporalClient.make({
       ...namespaceConfig(environment),
       ...options
+    }).pipe(
+      Effect.provideService(TemporalConnection.TemporalConnection, connection)
+    )
+  })
+
+/**
+ * Creates a scoped workflow client with the configured Temporal data converter.
+ *
+ * @since 1.0.0
+ * @category Constructors
+ */
+export const makeClientWithDataConverter = (
+  options: Omit<TemporalClient.TemporalWorkflowClientConfig, "connection" | "dataConverter" | "namespace"> = {}
+): Effect.Effect<
+  TemporalClient.TemporalWorkflowClient,
+  TemporalTestClientError,
+  TemporalDataConverter.TemporalDataConverter | TemporalTestEnvironment | Scope.Scope
+> =>
+  Effect.gen(function*() {
+    const environment = yield* TemporalTestEnvironment
+    const dataConverter = yield* TemporalDataConverter.TemporalDataConverter
+    const connection = yield* makeConnection
+    return yield* TemporalClient.make({
+      ...namespaceConfig(environment),
+      ...options,
+      dataConverter
     }).pipe(
       Effect.provideService(TemporalConnection.TemporalConnection, connection)
     )
@@ -261,7 +297,7 @@ export const runWorkerUntil = <A>(
  */
 export const connectionLayer: Layer.Layer<
   TemporalConnection.TemporalConnection,
-  TemporalError.TemporalConnectionError,
+  TemporalClientError.TemporalConnectionError,
   TemporalTestEnvironment
 > = Layer.effect(TemporalConnection.TemporalConnection)(makeConnection)
 
@@ -275,9 +311,23 @@ export const clientLayer = (
   options: Omit<TemporalClient.TemporalWorkflowClientConfig, "connection" | "namespace"> = {}
 ): Layer.Layer<
   TemporalClient.TemporalWorkflowClient,
-  TemporalError.TemporalConnectionError,
+  TemporalTestClientError,
   TemporalTestEnvironment
 > => Layer.effect(TemporalClient.TemporalWorkflowClient)(makeClient(options))
+
+/**
+ * A scoped workflow client layer with the configured Temporal data converter.
+ *
+ * @since 1.0.0
+ * @category Layers
+ */
+export const clientLayerWithDataConverter = (
+  options: Omit<TemporalClient.TemporalWorkflowClientConfig, "connection" | "dataConverter" | "namespace"> = {}
+): Layer.Layer<
+  TemporalClient.TemporalWorkflowClient,
+  TemporalTestClientError,
+  TemporalDataConverter.TemporalDataConverter | TemporalTestEnvironment
+> => Layer.effect(TemporalClient.TemporalWorkflowClient)(makeClientWithDataConverter(options))
 
 /**
  * A scoped workflow engine layer for the current test environment.
@@ -289,7 +339,7 @@ export const workflowEngineLayer = (
   config: TemporalWorkflowEngine.TemporalWorkflowEngineConfig
 ): Layer.Layer<
   WorkflowEngine.WorkflowEngine,
-  TemporalError.TemporalConnectionError,
+  TemporalTestClientError,
   TemporalTestEnvironment
 > =>
   Layer.effect(
