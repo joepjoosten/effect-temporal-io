@@ -49,8 +49,8 @@ infrastructure without repeating connection, namespace, task queue, and worker
 setup in every test file.
 
 ```ts
-import { describe, expect, it } from "@effect/vitest"
 import * as TemporalTesting from "@effect-temporal/testing"
+import { describe, expect, it } from "@effect/vitest"
 import * as Effect from "effect/Effect"
 
 describe("checkout workflow", () => {

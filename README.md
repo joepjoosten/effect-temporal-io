@@ -58,11 +58,11 @@ client-side wrapper, though: a Temporal-backed workflow also needs Temporal
 workers that export workflow functions through `TemporalWorkflowRuntime` and
 activity handlers through `TemporalWorkflowRuntime.makeActivities`.
 
-| Engine | Backing runtime | Best for | Main difference |
-| --- | --- | --- | --- |
-| `WorkflowEngine.layerMemory` | Current process memory | Tests, local development, simple single-process workflows | No external infrastructure, but executions are not durable across process death |
-| `ClusterWorkflowEngine.layer` | Effect Cluster, sharding, and `MessageStorage` | Effect-native distributed durable workflows | Durability and routing are implemented through Effect cluster entities and storage |
-| `TemporalWorkflowEngine.layer` | Temporal server and Temporal workers | Temporal-backed durable workflow orchestration | Temporal owns replay, scheduling, task queues, worker execution, signals, and queries |
+| Engine                         | Backing runtime                                | Best for                                                  | Main difference                                                                       |
+| ------------------------------ | ---------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `WorkflowEngine.layerMemory`   | Current process memory                         | Tests, local development, simple single-process workflows | No external infrastructure, but executions are not durable across process death       |
+| `ClusterWorkflowEngine.layer`  | Effect Cluster, sharding, and `MessageStorage` | Effect-native distributed durable workflows               | Durability and routing are implemented through Effect cluster entities and storage    |
+| `TemporalWorkflowEngine.layer` | Temporal server and Temporal workers           | Temporal-backed durable workflow orchestration            | Temporal owns replay, scheduling, task queues, worker execution, signals, and queries |
 
 In practice, swapping from the memory or cluster engine to Temporal means
 providing `TemporalWorkflowEngine.layer` on the client side and running a
@@ -74,7 +74,7 @@ code, and move those side effects into activities.
 Workflow IDs are derived from the Effect workflow name and execution ID:
 
 ```ts
-`${workflowIdPrefix ?? workflowName}/${executionId}`
+;`${workflowIdPrefix ?? workflowName}/${executionId}`
 ```
 
 This means a stable Effect idempotency key becomes a stable Temporal workflow
@@ -131,13 +131,9 @@ Use the Temporal connection and client layers, then provide the Temporal
 workflow engine layer to the Effect workflow program:
 
 ```ts
+import { TemporalClient, TemporalConnection, TemporalWorkflowEngine } from "@effect-temporal/workflow"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
-import {
-  TemporalClient,
-  TemporalConnection,
-  TemporalWorkflowEngine
-} from "@effect-temporal/workflow"
 import { checkoutWorkflow } from "./workflows.js"
 
 const temporalLayer = Layer.mergeAll(
@@ -169,10 +165,10 @@ worker process itself can be managed as an Effect application with
 `TemporalWorker.layer`:
 
 ```ts
+import { TemporalWorker } from "@effect-temporal/workflow"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 import { fileURLToPath } from "node:url"
-import { TemporalWorker } from "@effect-temporal/workflow"
 
 const workflowsPath = fileURLToPath(new URL("./temporal-workflows.js", import.meta.url))
 
@@ -197,12 +193,7 @@ file, export Temporal workflow functions created by `TemporalWorkflowRuntime`:
 
 ```ts
 import { TemporalWorkflowRuntime } from "@effect-temporal/workflow"
-import {
-  checkoutWorkflow,
-  checkoutWorkflowProgram,
-  releaseInventory,
-  reserveInventory
-} from "./workflows.js"
+import { checkoutWorkflow, checkoutWorkflowProgram, releaseInventory, reserveInventory } from "./workflows.js"
 
 export const CheckoutWorkflow = TemporalWorkflowRuntime.makeWorkflow({
   workflow: checkoutWorkflow,

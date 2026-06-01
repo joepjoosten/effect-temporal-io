@@ -8,9 +8,9 @@ workflow clients, workflow engines, and workers. The helpers use
 namespace into the workflow package services.
 
 ```ts
+import * as TemporalTesting from "@effect-temporal/testing"
 import { describe, expect, it } from "@effect/vitest"
 import * as Effect from "effect/Effect"
-import * as TemporalTesting from "@effect-temporal/testing"
 
 describe("workflow", () => {
   it.effect("runs against Temporal test infrastructure", () =>

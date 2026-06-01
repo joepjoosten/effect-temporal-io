@@ -28,7 +28,7 @@ importers:
         version: 0.3.2
       '@effect/language-service':
         specifier: latest
-        version: 0.84.2
+        version: 0.86.2
       '@effect/vitest':
         specifier: 4.0.0-beta.64
         version: 4.0.0-beta.64(effect@4.0.0-beta.64)(vitest@3.2.4(@types/node@22.19.15)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -56,6 +56,9 @@ importers:
       babel-plugin-annotate-pure-calls:
         specifier: ^0.5.0
         version: 0.5.0(@babel/core@7.29.0)
+      dprint:
+        specifier: ^0.54.0
+        version: 0.54.0
       effect:
         specifier: 4.0.0-beta.64
         version: 4.0.0-beta.64
@@ -89,6 +92,25 @@ importers:
       vitest:
         specifier: ^3.2.0
         version: 3.2.4(@types/node@22.19.15)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/client:
+    dependencies:
+      '@temporalio/client':
+        specifier: ^1.17.2
+        version: 1.17.2
+      '@temporalio/common':
+        specifier: ^1.17.2
+        version: 1.17.2
+      '@temporalio/proto':
+        specifier: ^1.17.2
+        version: 1.17.2
+      effect:
+        specifier: 4.0.0-beta.64
+        version: 4.0.0-beta.64
+      nexus-rpc:
+        specifier: ^0.0.2
+        version: 0.0.2
+    publishDirectory: dist
 
   packages/temporal:
     dependencies:
@@ -214,11 +236,66 @@ packages:
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
 
+  '@dprint/darwin-arm64@0.54.0':
+    resolution: {integrity: sha512-yqRI4enH+BDp+4+ZsPVdZM5h873JK1lN7li9l9A5u4C4cvh1oEsiBWAzEPccRkJ2ctF8LgaizBSxO38sqEVYbw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@dprint/darwin-x64@0.54.0':
+    resolution: {integrity: sha512-W9BARpgHypcQwatg5mnHaCpX6pLX5dBxxiv+tZKruhOmq8MKYOrAYDXlceMuHSowmWREfUF5yL4SRgXDGI6WQw==}
+    cpu: [x64]
+    os: [darwin]
+
   '@dprint/formatter@0.4.1':
     resolution: {integrity: sha512-IB/GXdlMOvi0UhQQ9mcY15Fxcrc2JPadmo6tqefCNV0bptFq7YBpggzpqYXldBXDa04CbKJ+rDwO2eNRPE2+/g==}
 
+  '@dprint/linux-arm64-glibc@0.54.0':
+    resolution: {integrity: sha512-VhM7p70VFuNqxZMdiv1e+nMboPj/hMFlTIBWrRaX7+6VThs9mJr9+94wrUeXgfnfsyaEKSbRFa/dru1PINoSNw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@dprint/linux-arm64-musl@0.54.0':
+    resolution: {integrity: sha512-QS1A74Lv60/L9oemHCzbHgOLbV2smSJG5IxS5fjf8ZWetyUt918WDzIHBilz/+uiB+OlW2UVTsm952UG0YOrLw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@dprint/linux-loong64-glibc@0.54.0':
+    resolution: {integrity: sha512-8Myka2/0KbhuZnEKL6jagPXTgDKVpd/tfXDRa0oibUBgaqOSku6iRMzHGa/PhqHL+s14Gcp+/cIHz0zU3Tkgug==}
+    cpu: [loong64]
+    os: [linux]
+
+  '@dprint/linux-loong64-musl@0.54.0':
+    resolution: {integrity: sha512-/AN3xCuMhC4PK7Pbj7/4zBuhFGr4m0OHV/5uGTfzpkKX/3+AXoyKl7PbT2VlNMGXAK0kuRThfjtx23gIwlWk7Q==}
+    cpu: [loong64]
+    os: [linux]
+
+  '@dprint/linux-riscv64-glibc@0.54.0':
+    resolution: {integrity: sha512-Aw2vXzzwFDpPbXh6ajsSabVCkCc66C3hCyMKprR/IxYvFtjYX80nh1ox0c7iaw6c4HacHMRLGw7FUSXvomPaEQ==}
+    cpu: [riscv64]
+    os: [linux]
+
+  '@dprint/linux-x64-glibc@0.54.0':
+    resolution: {integrity: sha512-zZqj3wQELOX8n6QfT2uuWoMf64Wv0lMXNyam3btm+PKkg0P6a54TPL09Bs9XsViOdxgTcamsiQ7HlErt/LEjIA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@dprint/linux-x64-musl@0.54.0':
+    resolution: {integrity: sha512-it6Qdt06dyW2adbAXpOCb7/KQLxlm4i1UphUAWqWsZk4t3EYetyAza9J0g3Vu9itIWSEIo9MnccgANckQJ6+qw==}
+    cpu: [x64]
+    os: [linux]
+
   '@dprint/typescript@0.91.8':
     resolution: {integrity: sha512-tuKn4leCPItox1O4uunHcQF0QllDCvPWklnNQIh2PiWWVtRAGltJJnM4Cwj5AciplosD1Hiz7vAY3ew3crLb3A==}
+
+  '@dprint/win32-arm64@0.54.0':
+    resolution: {integrity: sha512-F5kjV/6I9YtNOTDWHUpTqM2HHHS510BPL7z4NJuU0nDnaVeks7GwNEltGr56CcsG8XQYhkiAsqZytPu6AhA2hQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@dprint/win32-x64@0.54.0':
+    resolution: {integrity: sha512-AAr2ye/DtgYXDplRoPS+5U++x7T6W4a3I9FvTFWFxziFmUptvAg5G2c4FcXoAduSruhYZJvjDZrLseR2c3IwXg==}
+    cpu: [x64]
+    os: [win32]
 
   '@effect/build-utils@0.7.9':
     resolution: {integrity: sha512-I9tuSvKOnhF2NNsCzHulsUvEwJBQKqiZ1RtbJA+DfxqXZ9J1QSh4txnfnDC2D2bygMYuWqMJWg7TvAWun7cs6w==}
@@ -228,8 +305,8 @@ packages:
   '@effect/eslint-plugin@0.3.2':
     resolution: {integrity: sha512-c4Vs9t3r54A4Zpl+wo8+PGzZz3JWYsip41H+UrebRLjQ2Hk/ap63IeCgN/HWcYtxtyhRopjp7gW9nOQ2Snbl+g==}
 
-  '@effect/language-service@0.84.2':
-    resolution: {integrity: sha512-l04qNxpiA8rY5yXWckRPJ7Mk5MNerXuNymSFf+IdflfI5i8jgL1bpBNLuP6ijg7wgjdHc/KmTnCj2kT0SCntuA==}
+  '@effect/language-service@0.86.2':
+    resolution: {integrity: sha512-SaPln+8srOqDJDUwNTDmP5e+IYpEDr9+1epGznnsLqu8xvo6VnxyWARdeLpqvZJlb0Pgy9ca7ppqvvdWbHPXAg==}
     hasBin: true
 
   '@effect/vitest@4.0.0-beta.64':
@@ -961,8 +1038,16 @@ packages:
     resolution: {integrity: sha512-SxTGqRIa2+Vy4P9+06ZpUf4u7ZZmOXfx/kr9XvNqAApLxTMKjTQIg5OH5Wt4JLUtIR7dFkuHIyhewdRyG+hSsQ==}
     engines: {node: '>= 20.0.0'}
 
+  '@temporalio/client@1.17.2':
+    resolution: {integrity: sha512-d2IwhBQISZ2weQw5/64ajsc997yVN/Ye52op/9GA4flssk1OkA/pjjqCuRN54urMWUn91r7Xd2iscSkeb7Y9FA==}
+    engines: {node: '>= 20.0.0'}
+
   '@temporalio/common@1.15.0':
     resolution: {integrity: sha512-tBfC3fdOExsNoS5krkMUXnaMtCRKj05Jts4+TH+cgHpbys68nslFvUQLqwPIw2x6155Divb9MF219a/75itbTg==}
+    engines: {node: '>= 20.0.0'}
+
+  '@temporalio/common@1.17.2':
+    resolution: {integrity: sha512-E+eR17bc/vR7HrmJBLCUq/asQplOUbl2Tm+JQgeK/fbSEAH2KJNL3sAVxx4/32KnOciKOYuV450brEicSNtnwQ==}
     engines: {node: '>= 20.0.0'}
 
   '@temporalio/core-bridge@1.15.0':
@@ -975,6 +1060,10 @@ packages:
 
   '@temporalio/proto@1.15.0':
     resolution: {integrity: sha512-Awy4Fjzyba7Pg/CVZjjQ3x2CWkDL1qELyTZWcLlyjXq8bX694JVfBsmiMmF6tHn5/ySOIxDTcc0MSScZ0oKX5A==}
+    engines: {node: '>= 20.0.0'}
+
+  '@temporalio/proto@1.17.2':
+    resolution: {integrity: sha512-ecsk9F8863/FBwipQjJtuO/kEzWpIU9poAx+/twnJOesZW5dOabw7hYuqfUQul2H5MWm25qUvgU+SgLEgwr3zw==}
     engines: {node: '>= 20.0.0'}
 
   '@temporalio/testing@1.15.0':
@@ -1592,6 +1681,10 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dprint@0.54.0:
+    resolution: {integrity: sha512-sIy25poR2gRP/tWPTgP0MPeJoJcpv0xzYDcsboapvthbEt1Qw3Al252CA0xFyIh2cYEGGKyBJtKokryv4ERlJw==}
+    hasBin: true
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -2420,6 +2513,10 @@ packages:
     resolution: {integrity: sha512-hAWn8Hh2eewpB5McXR5EW81R3pR/ziuGhKCF3wFyUVCklanPqrIgMNr7jKCbzXeNVad0nUDfWpFRqh2u+zxQtw==}
     engines: {node: '>= 18.0.0'}
 
+  nexus-rpc@0.0.2:
+    resolution: {integrity: sha512-IWjIExdVYlmwXuzHdY/Q3lXCv1gbqoAXPazQhy2w4Xgtgha3H0OOujEESVPQcFUFMWm+pAk2gKnb57g8S41JZg==}
+    engines: {node: '>= 20.0.0'}
+
   node-gyp-build-optional-packages@5.2.2:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
     hasBin: true
@@ -2574,6 +2671,10 @@ packages:
 
   protobufjs@7.5.4:
     resolution: {integrity: sha512-CvexbZtbov6jW2eXAvLukXjXUW1TzFaivC46BpWc/3BpcCysb5Vffu+B3XHMm8lVEuy2Mm4XGex8hBSg1yapPg==}
+    engines: {node: '>=12.0.0'}
+
+  protobufjs@7.5.5:
+    resolution: {integrity: sha512-3wY1AxV+VBNW8Yypfd1yQY9pXnqTAN+KwQxL8iYm3/BjKYMNg4i0owhEe26PWDOMaIrzeeF98Lqd5NGz4omiIg==}
     engines: {node: '>=12.0.0'}
 
   protobufjs@7.5.6:
@@ -3281,9 +3382,42 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
+  '@dprint/darwin-arm64@0.54.0':
+    optional: true
+
+  '@dprint/darwin-x64@0.54.0':
+    optional: true
+
   '@dprint/formatter@0.4.1': {}
 
+  '@dprint/linux-arm64-glibc@0.54.0':
+    optional: true
+
+  '@dprint/linux-arm64-musl@0.54.0':
+    optional: true
+
+  '@dprint/linux-loong64-glibc@0.54.0':
+    optional: true
+
+  '@dprint/linux-loong64-musl@0.54.0':
+    optional: true
+
+  '@dprint/linux-riscv64-glibc@0.54.0':
+    optional: true
+
+  '@dprint/linux-x64-glibc@0.54.0':
+    optional: true
+
+  '@dprint/linux-x64-musl@0.54.0':
+    optional: true
+
   '@dprint/typescript@0.91.8': {}
+
+  '@dprint/win32-arm64@0.54.0':
+    optional: true
+
+  '@dprint/win32-x64@0.54.0':
+    optional: true
 
   '@effect/build-utils@0.7.9': {}
 
@@ -3293,7 +3427,7 @@ snapshots:
       '@dprint/typescript': 0.91.8
       prettier-linter-helpers: 1.0.1
 
-  '@effect/language-service@0.84.2': {}
+  '@effect/language-service@0.86.2': {}
 
   '@effect/vitest@4.0.0-beta.64(effect@4.0.0-beta.64)(vitest@3.2.4(@types/node@22.19.15)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
@@ -3469,7 +3603,7 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.5.4
+      protobufjs: 7.5.6
       yargs: 17.7.2
 
   '@humanfs/core@0.19.1': {}
@@ -3712,7 +3846,7 @@ snapshots:
   '@protobufjs/fetch@1.1.0':
     dependencies:
       '@protobufjs/aspromise': 1.1.2
-      '@protobufjs/inquire': 1.1.0
+      '@protobufjs/inquire': 1.1.1
 
   '@protobufjs/float@1.0.2': {}
 
@@ -3884,12 +4018,29 @@ snapshots:
       long: 5.3.2
       uuid: 11.1.0
 
+  '@temporalio/client@1.17.2':
+    dependencies:
+      '@grpc/grpc-js': 1.14.3
+      '@temporalio/common': 1.17.2
+      '@temporalio/proto': 1.17.2
+      abort-controller: 3.0.0
+      long: 5.3.2
+      uuid: 11.1.0
+
   '@temporalio/common@1.15.0':
     dependencies:
       '@temporalio/proto': 1.15.0
       long: 5.3.2
       ms: 3.0.0-canary.1
       nexus-rpc: 0.0.1
+      proto3-json-serializer: 2.0.2
+
+  '@temporalio/common@1.17.2':
+    dependencies:
+      '@temporalio/proto': 1.17.2
+      long: 5.3.2
+      ms: 3.0.0-canary.1
+      nexus-rpc: 0.0.2
       proto3-json-serializer: 2.0.2
 
   '@temporalio/core-bridge@1.15.0':
@@ -3909,6 +4060,11 @@ snapshots:
     dependencies:
       long: 5.3.2
       protobufjs: 7.5.6
+
+  '@temporalio/proto@1.17.2':
+    dependencies:
+      long: 5.3.2
+      protobufjs: 7.5.5
 
   '@temporalio/testing@1.15.0':
     dependencies:
@@ -4611,6 +4767,20 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  dprint@0.54.0:
+    optionalDependencies:
+      '@dprint/darwin-arm64': 0.54.0
+      '@dprint/darwin-x64': 0.54.0
+      '@dprint/linux-arm64-glibc': 0.54.0
+      '@dprint/linux-arm64-musl': 0.54.0
+      '@dprint/linux-loong64-glibc': 0.54.0
+      '@dprint/linux-loong64-musl': 0.54.0
+      '@dprint/linux-riscv64-glibc': 0.54.0
+      '@dprint/linux-x64-glibc': 0.54.0
+      '@dprint/linux-x64-musl': 0.54.0
+      '@dprint/win32-arm64': 0.54.0
+      '@dprint/win32-x64': 0.54.0
 
   dunder-proto@1.0.1:
     dependencies:
@@ -5576,6 +5746,8 @@ snapshots:
 
   nexus-rpc@0.0.1: {}
 
+  nexus-rpc@0.0.2: {}
+
   node-gyp-build-optional-packages@5.2.2:
     dependencies:
       detect-libc: 2.1.2
@@ -5737,7 +5909,7 @@ snapshots:
 
   proto3-json-serializer@2.0.2:
     dependencies:
-      protobufjs: 7.5.4
+      protobufjs: 7.5.6
 
   protobufjs@7.5.4:
     dependencies:
@@ -5751,6 +5923,21 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
+      '@types/node': 22.19.15
+      long: 5.3.2
+
+  protobufjs@7.5.5:
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+      '@protobufjs/base64': 1.1.2
+      '@protobufjs/codegen': 2.0.5
+      '@protobufjs/eventemitter': 1.1.0
+      '@protobufjs/fetch': 1.1.0
+      '@protobufjs/float': 1.0.2
+      '@protobufjs/inquire': 1.1.1
+      '@protobufjs/path': 1.1.2
+      '@protobufjs/pool': 1.1.0
+      '@protobufjs/utf8': 1.1.1
       '@types/node': 22.19.15
       long: 5.3.2
 

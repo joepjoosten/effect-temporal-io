@@ -14,7 +14,13 @@ const scopedAlias = (scope: string, name: string) => {
   return ({
     [`@effect-temporal/${scope}`]: path.join(__dirname, "packages", name, target),
     [`@effect-temporal/${scope}/TemporalClient`]: path.join(__dirname, "packages", name, target, "TemporalClient"),
-    [`@effect-temporal/${scope}/TemporalConnection`]: path.join(__dirname, "packages", name, target, "TemporalConnection"),
+    [`@effect-temporal/${scope}/TemporalConnection`]: path.join(
+      __dirname,
+      "packages",
+      name,
+      target,
+      "TemporalConnection"
+    ),
     [`@effect-temporal/${scope}/TemporalError`]: path.join(__dirname, "packages", name, target, "TemporalError"),
     [`@effect-temporal/${scope}/TemporalWorker`]: path.join(__dirname, "packages", name, target, "TemporalWorker"),
     [`@effect-temporal/${scope}/TemporalWorkflowEngine`]: path.join(

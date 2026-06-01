@@ -37,6 +37,8 @@
     "removeComments": false,
     "plugins": [{ "name": "@effect/language-service" }],
     "paths": {
+      "@effect-temporal/client": ["./packages/client/src/index.js"],
+      "@effect-temporal/client/*": ["./packages/client/src/*.js"],
       "@effect-temporal/testing": ["./packages/testing/src/index.js"],
       "@effect-temporal/testing/*": ["./packages/testing/src/*.js"],
       "@effect-temporal/workflow": ["./packages/temporal/src/index.js"],
